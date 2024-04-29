@@ -75,7 +75,7 @@ ga_domain: huangxuan.me
 # Sidebar settings
 sidebar: true # whether or not using Sidebar.
 sidebar-about-description: "逍遥仙人 <br> Email:roschild.rui@gmail.com"
-sidebar-avatar: https://github.com/Huxpro.png # use absolute URL, seeing it's used in both `/` and `/about/`
+sidebar-avatar: /img/young_age_photo.jpg
 
 # Featured Tags
 featured-tags: False # whether or not using Feature-Tags
