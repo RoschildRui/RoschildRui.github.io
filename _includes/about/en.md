@@ -8,7 +8,7 @@ I am Roschild Rui, a freshman majoring in Data Science and Big Data at South Chi
 
 ### Project and Competition Experience
 - **X-sentiments**: Real-time sentiment analysis, big data public opinion analysis, and keyword search for popular videos and corresponding comments on Bilibili
-- **Kaggle LLM Prompt Recovery**: [Top 30, Silver Medal](https://www.kaggle.com/competitions/llm-prompt-recovery)
+- **Kaggle [LLM Prompt Recovery](https://www.kaggle.com/competitions/llm-prompt-recovery)**: Top 30, Silver Medal
 - **2023 Asia-Pacific Cup**: National Second Prize
 - **2024 Huashu Cup International Mathematical Modeling Contest**: Meritorious Winner
 - **2024 College Big Data Challenge**: Second Prize
