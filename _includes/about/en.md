@@ -1,4 +1,4 @@
-I am Roschild Rui, a freshman majoring in Data Science and Big Data at South China University of Technology (Class of 2024).
+I am Roschild Rui, a student majoring in Data Science and Big Data at South China University of Technology (Class of 2023.9).
 
 ### Areas of Interest
 - Pre-training, fine-tuning, and inference of large language models
