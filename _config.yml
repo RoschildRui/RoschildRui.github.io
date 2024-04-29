@@ -74,7 +74,7 @@ kramdown:
 
 # Sidebar settings
 sidebar: true # whether or not using Sidebar.
-sidebar-about-description: "Future Kaggle Grandmaster <br> Email:roschild.rui@gmail.com"
+sidebar-about-description: "This is a blog by Roschild.Rui, the kaggle Grandmaster in the short future <br> Email:roschild.rui@gmail.com"
 sidebar-avatar: /img/young_age_photo.jpg
 
 # Featured Tags
