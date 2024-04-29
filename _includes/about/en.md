@@ -1,7 +1,7 @@
 I am Roschild Rui, a freshman majoring in Data Science and Big Data at South China University of Technology (Class of 2024).
 
 ### Areas of Interest
-- Pre-training, fine-tuning, and inference of large forecasting models
+- Pre-training, fine-tuning, and inference of large language models
 - Research on NLP algorithms
 - Low-market-cap random forest quantitative trading strategies
 - Kaggle competitions
