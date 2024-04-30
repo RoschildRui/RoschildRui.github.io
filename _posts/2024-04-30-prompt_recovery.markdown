@@ -22,3 +22,7 @@ catalog:      true
 - 3.few-shot [mistral-7b-v2](https://www.kaggle.com/datasets/ahmadsaladin/mistral-7b-it-v02)模型
 
 将三个模型还原的提示词集成在一起作为最终的预测结果
+
+### 数据
+**reference**
+[https://www.kaggle.com/code/tomooinubushi/all-in-one-dataset-with-embedding/notebook]
