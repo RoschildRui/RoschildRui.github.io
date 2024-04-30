@@ -26,7 +26,7 @@ LLMs are commonly used to rewrite or make stylistic changes to text. The goal of
 
 **Description**
 
-NLP workflows increasingly involve rewriting text, but there's still a lot to learn about how to prompt LLMs **effectively**. This machine learning competition is designed to be a novel way to dig deeper into this problem.
+NLP workflows increasingly involve rewriting text, but there's still a lot to learn about how to **prompt LLMs effectively**. This machine learning competition is designed to be a novel way to dig deeper into this problem.
 
 The challenge: recover the LLM prompt used to rewrite a given text. You’ll be tested against a dataset of 1300+ original texts, each paired with a rewritten version from Gemma, Google’s new family of open models.
 
