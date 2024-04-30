@@ -56,9 +56,85 @@ id,rewrite_prompt
 
 将三个模型还原的提示词集成在一起作为最终的预测结果
 
-### 数据
+### 数据集的构建
+
+因为比赛方提供的数据**有限甚至等同于没有**，训练集和测试集都只有**一条**，所以我们需要额外查找生成一些数据以方便训练**端到端模型**以及**构建本地cv库**
+
+#### 数据来源
+以下是我们的数据来源，这里必须要感谢kaggle**开源数据集的大佬们**，以及**整理开源数据的开源大佬们**！！！
 
 **reference**
 - [https://www.kaggle.com/code/tomooinubushi/all-in-one-dataset-with-embedding/notebook](https://huggingface.co/datasets/Skylion007/openwebtext)
 - [https://huggingface.co/datasets/Skylion007/openwebtext](https://huggingface.co/datasets/Skylion007/openwebtext)
 - [https://huggingface.co/datasets/euclaise/writingprompts/viewer/default/train?p=1](https://huggingface.co/datasets/euclaise/writingprompts/viewer/default/train?p=1)
+- [https://www.kaggle.com/datasets/nbroad/gemma-rewrite-nbroad](https://www.kaggle.com/datasets/nbroad/gemma-rewrite-nbroad)
+- [https://www.kaggle.com/datasets/ilanmeissonnier/chatgpt-rewrite-promts/data](https://www.kaggle.com/datasets/ilanmeissonnier/chatgpt-rewrite-promts/data)
+- [https://www.kaggle.com/datasets/winddude/70k-prompt-rewrite-triples/data](https://www.kaggle.com/datasets/winddude/70k-prompt-rewrite-triples/data)
+- [https://www.kaggle.com/code/aatiffraz/generating-data-through-gemma7b-1000-texts-5h](https://www.kaggle.com/code/aatiffraz/generating-data-through-gemma7b-1000-texts-5h)
+- ...
+
+#### 数据预处理
+
+```python
+import re
+
+def fix_prompt(text):
+    patterns = [
+        r'therefore.*I cannot',
+        "does not contain any",
+        'am unable to provide',
+        "am unable to rewrite",
+        "do not have the capacity to write",
+        "am unable to engage",
+        "I am unable to",
+        "not provide information",
+    ]
+    sub_patterns= [
+        r"Sure, here.*?:",
+        r"Sure. here.*?:",
+        r"Certainly, here.*?:",
+        r"here.*? text*?:",
+        r"Summary of .*?\n\n",
+        r"Analysis of .*?\n\n",
+        #r"The text.*?:"
+    ]
+    for p in patterns:
+        match = re.search(p, text, re.IGNORECASE)
+        
+        if match:
+            text = ''
+    
+    if text=="":
+        return text
+    else:
+        for p in sub_patterns:
+            match = re.search(p, text, re.IGNORECASE)
+            if match:
+                text = text[match.end():]
+        if text.startswith('**\n\n') or text.startswith('user'):
+            text=text[4:].strip()
+        return text
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
