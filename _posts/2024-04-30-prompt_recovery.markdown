@@ -6,8 +6,10 @@ header-style: text
 catalog:      true
 
 ---
-> “[比赛内容细节](https://www.kaggle.com/competitions/llm-prompt-recovery)”
+> “这是我的第一个blog，也是在成为Kaggle Grandmaster之路上的第一个blog，希望在这一路上能认识更多志同道合的朋友”
+> "This is my first blog post, also the first blog on the beginning of my journey to become a Kaggle Grandmaster. Embarking on this path, I hope to meet with more friends who own great passion on data science and have dream to devote themselves to explore the fascinating realm of machine learning, uncover valuable insights, and make a positive impact in the field."
 
+### [比赛内容](https://www.kaggle.com/competitions/llm-prompt-recovery)
 我首先在这一篇blog中会先简单介绍我们团队的最终提交方案
 
 随后整个方案的迭代形成过程将在接下来我的blog中逐一总结呈现
@@ -17,7 +19,7 @@ catalog:      true
 感谢 [Kaggle](https://www.kaggle.com/) ——一个开放，富有活力的数据科学社区竞赛平台，为我们提供了一次深入理解LLM内部机制的机会。
 
 ### 方案总结
-- 1.基于deberta-v3-large的seq2seq模型
+- 1.构建基于deberta-v3-large的seq2seq模型
 - 2.构建合适的adapter层微调[phi2](https://www.kaggle.com/models/Microsoft/phi/Transformers/2/1)模型
 - 3.few-shot [mistral-7b-v2](https://www.kaggle.com/datasets/ahmadsaladin/mistral-7b-it-v02)模型
 
@@ -27,3 +29,5 @@ catalog:      true
 
 **reference**
 - https://www.kaggle.com/code/tomooinubushi/all-in-one-dataset-with-embedding/notebook
+- https://huggingface.co/datasets/Skylion007/openwebtext
+- https://huggingface.co/datasets/euclaise/writingprompts/viewer/default/train?p=1
