@@ -174,6 +174,139 @@ np.save('test_emb_sentence-t5.npy', test_emb)
 ```
 
 ### 训练deberta模型
+#### 模型参数设置
+```python
+class config:
+    AMP = True
+    BATCH_SIZE_TRAIN = 4
+    BATCH_SIZE_VALID = 4
+    BETAS = (0.85, 0.999)
+    DEBUG = 0 
+    DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    LR = 5e-6
+    EPOCHS = 10
+    EPS = 1e-8
+    GRADIENT_CHECKPOINTING = False
+    MODEL = "/kaggle/input/deberta-v3-large-hf-weights"
+    CKPT = 'deberta-v3-large'
+    MAX_GRAD_NORM = 250000.0
+    MAX_LEN = 384
+    NUM_WORKERS = 0
+    PRINT_FREQ = 500
+    SEED = 42
+    WANDB = False
+    WEIGHT_DECAY = 0.005
+```
+
+#### 模型结构
+模型结构中有两个tricks
+- 直接使用deberta的预训练权重提取原始文本和重写文本的特征，我们发现全参数训练和使用预训练权重在测试集上的表现**没有显著的差别**，在交叉验证的时候甚至发现在某些时候会弱于预训练权重
+```python
+class CustomModel(nn.Module):
+    def __init__(self, cfg, config_path=None, mode: str ="train", pretrained=False): 
+        super().__init__()
+        self.cfg = cfg
+        self.mode = mode
+        self.dropout = 0.2
+        if config_path is None:
+            self.config = AutoConfig.from_pretrained(cfg.MODEL, output_hidden_states=True) # output_hidden_states=True 表示在配置中启用输出隐藏状态的选项,即在前向传播过程中保存每一层的隐藏状态。
+            self.config.hidden_dropout = 0.
+            self.config.hidden_dropout_prob = 0. # Dropout率
+            self.config.attention_dropout = 0. # 注意力权重的dropout率
+            self.config.attention_probs_dropout_prob = 0.
+
+        else:
+            self.config = torch.load(config_path)
+
+        if pretrained:
+            self.model = AutoModel.from_pretrained(cfg.MODEL, config=self.config) #self.config：这是一个配置对象，包含了模型应有的配置。用来修改默认的模型配置，如调整dropout率或其他架构相关的设置。
+        else:
+            self.model = AutoModel(self.config)
+
+        """
+        功能：用于启用模型的梯度检查点功能，以优化内存使用，特别是在处理非常大的模型时。
+        条件：只有当配置（self.cfg）中的 GRADIENT_CHECKPOINTING 属性为 True 时，才启用梯度检查点。这通常在配置文件中指定，或在实例化模型类之前设置。
+        方法：gradient_checkpointing_enable() 是 transformers 库提供的方法，它允许模型在训练时仅保存必要的激活，而在需要时重新计算其他激活，从而减少内存消耗。
+        """
+        if self.cfg.GRADIENT_CHECKPOINTING:
+            self.model.gradient_checkpointing_enable()
+
+        self.head = nn.Sequential(
+            nn.Linear(self.config.hidden_size*4, 32768),
+            nn.BatchNorm1d(32256),
+            nn.ReLU(),
+            nn.Linear(32256, 768),
+        )
+        """
+        self._init_weights 是一个自定义方法，用于初始化传入模块的权重。此方法通常包含针对不同类型的层（如线性层、嵌入层、层归一化等）的特定初始化策略。
+        这种初始化包括设置权重的初始分布（如正态分布），并对偏置进行零初始化等。
+        """
+        self._init_weights(self.head)
+
+    # 这段代码定义 _init_weights 的方法，用于自定义权重初始化。
+    """
+    这个 _init_weights 方法提供了一个细致入微的权重初始化策略，
+    针对不同类型的层采用了最适合的初始化方式。这种策略有助于模型训练的稳定性和收敛速度，
+    是构建有效深度学习模型的重要步骤。在模型构建过程中使用这种自定义的初始化方法，可以显著提高模型的性能和可靠性。
+    """
+    def _init_weights(self, module):
+        if isinstance(module, nn.Linear):
+            """
+            线性层（nn.Linear）：如果 module 是一个线性层，下面的方法将使用正态分布来初始化其权重，其中均值 (mean) 为 0，
+            标准差 (std) 为 self.config.initializer_range。这个 initializer_range 通常是在模型的配置中指定的，用于控制初始化的分布范围。
+            如果该层包含偏置 (bias)，则将偏置初始化为零。
+            """
+            module.weight.data.normal_(mean=0.0, std=self.config.initializer_range)
+            if module.bias is not None:
+                module.bias.data.zero_()
+        elif isinstance(module, nn.Embedding):
+            """
+            嵌入层（nn.Embedding）：如果 module 是一个嵌入层，同样使用正态分布初始化其权重。
+            如果嵌入层有 padding_idx（一般用于标记嵌入矩阵中的填充位置），则将这个位置的权重显式设置为零。这是为了确保填充位置的嵌入不会对模型产生任何影响
+            """
+            module.weight.data.normal_(mean=0.0, std=self.config.initializer_range)
+            if module.padding_idx is not None:
+                module.weight.data[module.padding_idx].zero_()
+        elif isinstance(module, nn.LayerNorm):
+            """
+            层归一化（nn.LayerNorm）：如果 module 是层归一化层，方法将其偏置 (bias) 初始化为零，权重 (weight) 初始化为 1。
+            层归一化的权重和偏置通常用于调整归一化后数据的比例和偏移。
+            """
+            module.bias.data.zero_()
+            module.weight.data.fill_(1.0)
+
+    def feature(self, inputs):
+        """
+        self.model(**inputs): 调用预训练的 Transformer 模型（例如BERT、GPT等），传入的 inputs 字典包含了诸如 input_ids, attention_mask 等键值对。
+        **inputs 是 Python 的语法，表示将字典拆包为关键字参数。
+        outputs: 模型的输出通常是一个包含多个组件的对象。对于许多基于 Hugging Face 的 Transformer 模型，outputs 包含了 last_hidden_state（最后一层的隐藏状态），
+        hidden_states（如果配置了返回所有隐藏层的状态），以及可能的 attentions（如果配置了返回注意力权重）。
+        """
+        outputs = self.model(**inputs)
+        #last_hidden_states = outputs[1]
+        feature1 = self.pool(outputs.hidden_states[-1], inputs['attention_mask'])
+        feature2 = self.pool(outputs.hidden_states[-2], inputs['attention_mask'])
+        """
+        torch.cat([feature1, feature2], dim=1): 这行代码将 feature1 和 feature2 沿着第二维度（即特征维度）拼接起来。
+        这种方式融合来自最后两个隐藏层的信息，使得生成的特征向量不仅包含了最终层的上下文信息，也融入了之前层的语义特征。
+        返回的结果是一个扩展的特征向量，现在的特征大小是原来每层特征大小的两倍，因为它包含了两层的输出。
+        """
+        return torch.cat([feature1, feature2], dim=1)
+
+    def forward(self, original_texts, rewritten_texts, rewrite_prompts_embedding):
+
+        original_texts_feature = self.feature(original_texts) # shape (batch_size, 768)
+        rewritten_texts_feature = self.feature(rewritten_texts) # shape (batch_size, 768)
+        feature = torch.cat([original_texts_feature, rewritten_texts_feature], dim=1) # shape (batch_size, 768 * 2)
+        output = self.head(feature)
+
+        if self.mode == "train":
+            prompt_embedding = torch.tensor(rewrite_prompts_embedding, device=self.cfg.DEVICE) # shape (batch_size, 768)
+        else:
+            prompt_embedding = None
+
+        return output, prompt_embedding
+```
 
 
 
