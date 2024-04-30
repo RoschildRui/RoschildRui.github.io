@@ -56,6 +56,55 @@ id,rewrite_prompt
 
 将三个模型还原的提示词集成在一起作为最终的预测结果
 
+### 评价指标的理解
+我将通过一个具体的数学例子来展示锐化余弦相似度与传统余弦相似度之间的区别。这个例子将帮助你更清楚地理解在应用锐化处理后，相似度值是如何被放大或缩小的。
+
+**示例向量**
+假设我们有两对向量，一对较为相似，另一对较为不相似：
+
+- 向量对A（较为相似）:
+  -  $\vec{u}$ = [1, 2, 3] 
+  -  $\vec{v}$ = [1, 2, 2.9] 
+
+- 向量对B（较为不相似）:
+  -  $\vec{x}$ = [1, 2, 3] 
+  -  $\vec{y}$ = [3, 2, 1] 
+
+**计算余弦相似度**
+
+余弦相似度公式为：
+$\text{cosine similarity}$ = $\frac{\vec{a} \cdot \vec{b}}{\|\vec{a}\| \|\vec{b}\|}$
+
+其中 $\vec{a} \cdot \vec{b} $ 是向量点积，$ \|\vec{a}\| $ 和 $ \|\vec{b}\| $ 是向量的模。
+
+对于向量对A和B，计算余弦相似度：
+
+- 对A:
+  $ \vec{u} \cdot \vec{v} = 1*1 + 2*2 + 3*2.9 = 1 + 4 + 8.7 = 13.7 $
+  $ \|\vec{u}\| = \sqrt{1^2 + 2^2 + 3^2} = \sqrt{14} $
+  $ \|\vec{v}\| = \sqrt{1^2 + 2^2 + 2.9^2} \approx \sqrt{13.61} $
+  $ \text{cosine similarity}_{A} = \frac{13.7}{\sqrt{14} \times \sqrt{13.61}} \approx 0.994 $
+
+- 对B:
+  $ \vec{x} \cdot \vec{y} = 1*3 + 2*2 + 3*1 = 3 + 4 + 3 = 10 $
+  $ \|\vec{x}\| = \sqrt{14}, \|\vec{y}\| = \sqrt{14} $
+  $ \text{cosine similarity}_{B} = \frac{10}{14} \approx 0.535 $
+
+**应用锐化处理（$ p = 3 $）**
+
+锐化余弦相似度为 $ \text{cosine similarity}^p $，取 $ p = 3 $：
+
+- 对A:
+  $ \text{sharpened cosine similarity}_{A} = 0.994^3 \approx 0.982 $
+
+- 对B:
+  $ \text{sharpened cosine similarity}_{B} = 0.535^3 \approx 0.153 $
+
+**分析结果**
+
+在这个例子中，向量对A的余弦相似度很高（接近1），通过锐化处理，它的相似度值虽未被进一步增强，但减少相对B很有限。对于向量对B锐化处理显著降低了它的相似度值，A与B的差值显著提高了。
+通过锐化余弦相似度，我们可以更加明显地区分高度相似和一般相似的情况，这在需要精确区分非常相近或者迥异实体时尤为有用。这种方法通过强化已有的相似度或差异，帮助改善决策过程和结果的准确性。
+
 ### 数据集的构建
 
 因为比赛方提供的数据**有限甚至等同于没有**，训练集和测试集都只有**一条**😰，所以我们需要额外查找生成一些数据以方便训练**端到端模型**以及**构建本地cv库**
@@ -200,7 +249,7 @@ class config:
 
 #### 模型结构
 模型结构中有两个tricks
-- 直接使用deberta的预训练权重提取原始文本和重写文本的特征，我们发现全参数训练和使用预训练权重在测试集上的表现**没有显著的差别**，在交叉验证的时候甚至发现在某些时候会弱于预训练权重
+- 直接使用deberta的预训练权重提取原始文本和重写文本的特征，我们发现全参数训练和使用预训练权重在测试集上的表现**没有显著的差别**，在交叉验证的时候甚至发现在某些时候会**弱于**预训练权重，于是我们设计了一个很典型的线性层结构，从底层模型deberta中提取的丰富特征中学习到有用的表示，进而通过变换和压缩，生成能够有效预测重写提示的嵌入向量。关于为什么将中间层维度，简单来说就是玄学😅，硬要说就是768*42，一般将中间层向量嵌入向量维度的n倍会取得不错的效果😊，这里我们直接从  `n=36`开始尝试最终发现`n=42`取得了不错的效果。（我的评价是经验，因为我们既希望模型能从deberta提取到的特征中学到更丰富的语义信息又希望不要overfitting，如果觉得太玄学我感觉直接使用后面两个模型集成效果也足够，这个seq2seq就当看一个乐子了😇）
 ```python
 class CustomModel(nn.Module):
     def __init__(self, cfg, config_path=None, mode: str ="train", pretrained=False): 
@@ -232,7 +281,7 @@ class CustomModel(nn.Module):
             self.model.gradient_checkpointing_enable()
 
         self.head = nn.Sequential(
-            nn.Linear(self.config.hidden_size*4, 32768),
+            nn.Linear(self.config.hidden_size*4, 32256),
             nn.BatchNorm1d(32256),
             nn.ReLU(),
             nn.Linear(32256, 768),
@@ -243,11 +292,10 @@ class CustomModel(nn.Module):
         """
         self._init_weights(self.head)
 
-    # 这段代码定义 _init_weights 的方法，用于自定义权重初始化。
+    # 定义 _init_weights 的方法，用于自定义权重初始化。
     """
-    这个 _init_weights 方法提供了一个细致入微的权重初始化策略，
-    针对不同类型的层采用了最适合的初始化方式。这种策略有助于模型训练的稳定性和收敛速度，
-    是构建有效深度学习模型的重要步骤。在模型构建过程中使用这种自定义的初始化方法，可以显著提高模型的性能和可靠性。
+    这个 _init_weights 方法提供了一个权重初始化策略，
+    针对不同类型的层采用了最适合的初始化方式。有助于模型训练的稳定性和收敛速度。
     """
     def _init_weights(self, module):
         if isinstance(module, nn.Linear):
@@ -277,7 +325,7 @@ class CustomModel(nn.Module):
 
     def feature(self, inputs):
         """
-        self.model(**inputs): 调用预训练的 Transformer 模型（例如BERT、GPT等），传入的 inputs 字典包含了诸如 input_ids, attention_mask 等键值对。
+        self.model(**inputs): 调用预训练的 Transformer 模型，传入的 inputs 字典包含了诸如 input_ids, attention_mask 等键值对。
         **inputs 是 Python 的语法，表示将字典拆包为关键字参数。
         outputs: 模型的输出通常是一个包含多个组件的对象。对于许多基于 Hugging Face 的 Transformer 模型，outputs 包含了 last_hidden_state（最后一层的隐藏状态），
         hidden_states（如果配置了返回所有隐藏层的状态），以及可能的 attentions（如果配置了返回注意力权重）。
@@ -287,7 +335,7 @@ class CustomModel(nn.Module):
         feature1 = self.pool(outputs.hidden_states[-1], inputs['attention_mask'])
         feature2 = self.pool(outputs.hidden_states[-2], inputs['attention_mask'])
         """
-        torch.cat([feature1, feature2], dim=1): 这行代码将 feature1 和 feature2 沿着第二维度（即特征维度）拼接起来。
+        torch.cat([feature1, feature2], dim=1): 将 feature1 和 feature2 沿着第二维度（即特征维度）拼接起来。
         这种方式融合来自最后两个隐藏层的信息，使得生成的特征向量不仅包含了最终层的上下文信息，也融入了之前层的语义特征。
         返回的结果是一个扩展的特征向量，现在的特征大小是原来每层特征大小的两倍，因为它包含了两层的输出。
         """
