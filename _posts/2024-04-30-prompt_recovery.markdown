@@ -97,7 +97,7 @@ id,rewrite_prompt
    - 例如,匹配"therefore.*I cannot"模式的文本表示这个大语言模型大概率无法生成合适的重写,因此将其清空。
    - 匹配"Sure, here.*?:"模式的文本可能表示语言模型生成了一些固定的回复格式,需要提取其后的相关文本。
 
-**代码如下**
+**参考代码如下：**
 ```python
 import re
 
@@ -142,7 +142,7 @@ def fix_prompt(text):
 #### embedding数据
 将上述步骤处理好的数据，通过**sentence-t5-base**模型，生成训练集和测试集的embedding
 
-参考代码如下：
+**参考代码如下：**
 ````python
 import pandas as pd
 import gc
@@ -172,6 +172,8 @@ test_emb = np.asarray(test_emb.astype('float32'))
 
 np.save('test_emb_sentence-t5.npy', test_emb)
 ```
+
+### 训练deberta模型
 
 
 
