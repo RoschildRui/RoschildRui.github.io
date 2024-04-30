@@ -12,7 +12,7 @@ catalog:      true
 
 随后会将整个方案的迭代形成过程在接下来我的blog中逐一总结呈现
 
-再次感谢开放，充满活力的[kaggle](https://www.kaggle.com/)数据科学社区竞赛平台为我们提供这次充满意义的比赛
+感谢 [Kaggle](https://www.kaggle.com/) ——一个开放，富有活力的数据科学社区竞赛平台，为我们提供了一次深入理解LLM内部机制的机会。
 
 ### 方案总结
 - 1.基于deberta-v3-large的seq2seq模型
