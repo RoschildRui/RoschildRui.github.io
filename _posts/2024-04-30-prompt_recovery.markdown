@@ -11,11 +11,11 @@ catalog:      true
 > "This is my first blog post. Setting out on this path, I am looking forward to meeting more friends who also have greate passion on data science. Together, we will dive into the fascinating world of data, uncover valuable and deeper insights on this Earth, and strive to make a meaningful impact to make people life great 'again' !!!"
 
 ### 写在前面
-我首先在这一篇blog中会先简单介绍我们团队的最终提交方案
+在这一篇blog中我会先简单介绍我们团队的最终提交方案
 
-随后整个方案的迭代形成过程将在接下来我的blog中逐一总结呈现
+随后整个方案的迭代形成过程将在接下来我的blog中逐一呈现
 
-同时，我们也会在接下来的blog中通过复现大佬的比赛方案，反思总结，以期实现更好成果产出
+同时，我们也会在接下来的blog中通过复现金牌区以及部分优秀银牌区的比赛方案，反思总结，以期加深我们对于大模型的理解
 
 感谢 [Kaggle](https://www.kaggle.com/) ——一个开放，富有活力的数据科学社区竞赛平台，为我们提供了一次深入理解LLM内部机制的机会。
 
