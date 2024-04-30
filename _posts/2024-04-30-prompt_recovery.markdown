@@ -11,7 +11,7 @@ catalog:      true
 > "This is my first blog post. Setting out on this path, I am looking forward to meeting more friends who also have greate passion on data science. Together, we will dive into the fascinating world of data, uncover valuable and deeper insights on this Earth, and strive to make a meaningful impact to make people life great 'again' !!!"
 
 ### 写在前面
-在这一篇blog中我会先简单介绍我们团队的最终提交方案
+在这一篇blog中我会先简单介绍我们团队的最终提交方案**(`PV=0.6694`,`PB=0.6659`)**
 
 随后整个方案的迭代形成过程将在接下来我的blog中逐一呈现
 
@@ -264,7 +264,7 @@ class config:
 
 #### 模型结构
 模型结构中有两个tricks
-- 直接使用deberta的预训练权重提取原始文本和重写文本的特征，我们发现全参数训练和使用预训练权重在测试集上的表现**没有显著的差别**，在交叉验证的时候甚至发现在某些时候会**弱于**预训练权重，于是我们设计了一个**头结构**，让这个头能从底层模型deberta中提取的丰富特征中学习到有用的表示，进而通过变换和压缩，生成能够有效预测重写提示的嵌入向量。关于为什么将中间层维度，简单来说就是玄学😅，硬要说就是768*42，一般将**中间层向量维度设为嵌入向量维度的n倍**会取得不错的效果😊，这里我们直接从  `n=36`开始尝试最终发现`n=42`取得了不错的效果。（我的评价是经验，因为我们既希望模型能从deberta提取到的特征中学到**更丰富的语义信息**又希望不要**overfitting**，如果觉得太玄学我感觉直接使用后面两个模型集成效果也足够，这个seq2seq就当看一个乐子了😇）
+- 直接使用deberta的预训练权重提取原始文本和重写文本的特征，我们发现全参数训练和使用预训练权重在测试集上的表现**没有显著的差别**，在交叉验证的时候甚至发现在某些时候会**弱于**预训练权重，于是我们设计了一个**头结构**，让这个头能从底层模型deberta中提取的丰富特征中学习到有用的表示，进而通过变换和压缩，生成能够有效预测重写提示的嵌入向量。关于为什么将中间层维度设为32256，简单来说就是玄学😅，硬要说就是768*42，一般将**中间层向量维度设为嵌入向量维度的n倍**会取得不错的效果😊，这里我们直接从  `n=36`开始尝试最终发现`n=42`取得了不错的效果。（我的评价是经验，因为我们既希望模型能从deberta提取到的特征中学到**更丰富的语义信息**又希望不要**overfitting**，如果觉得太玄学，直接使用后面两个模型集成效果也足够取得不错的效果**(`PV=0.6573`,`PB=0.6569`在LB中私榜排81名，同样是银牌位)**，这个seq2seq就当看一个乐子了😇）
 ```python
 class CustomModel(nn.Module):
     def __init__(self, cfg, config_path=None, mode: str ="train", pretrained=False): 
