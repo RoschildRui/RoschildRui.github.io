@@ -40,12 +40,14 @@ Submission File
 
 The submission file should contain a header and have the following format:
 
-···
+```csv
 id,rewrite_prompt
 000aaa,"Rewrite this essay but do it using the writing style of Dr. Seuss"
 111bbb,"Rewrite this essay but do it using the writing style of William Shakespeare"
 222ccc,"Rewrite this essay but do it using the writing style of Tupac Shakur"
 ...
+```
+
 
 ### 方案总结
 - 1.构建基于deberta-v3-large的seq2seq模型
