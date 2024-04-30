@@ -6,7 +6,7 @@ header-style: text
 catalog:      true
 
 ---
-> “[比赛内容细节](https://www.kaggle.com/competitions/llm-prompt-recovery)如下”
+> “[比赛内容细节](https://www.kaggle.com/competitions/llm-prompt-recovery)”
 
 我首先在这一篇blog中会先简单介绍我们团队的最终提交方案
 
