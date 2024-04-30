@@ -6,8 +6,9 @@ header-style: text
 catalog:      true
 
 ---
-> “这是我的第一个blog，也是在成为Kaggle Grandmaster之路上的第一个blog，希望在这一路上能认识更多志同道合的朋友”
-> "This is my first blog post, also the first blog on the beginning of my journey to become a Kaggle Grandmaster. Embarking on this path, I hope to meet with more friends who own great passion on data science and have dream to devote themselves to explore the fascinating realm of machine learning, uncover valuable insights, and make a positive impact in the field."
+> “这是我的第一个blog，希望在这一路上能认识更多志同道合的朋友”
+
+> "This is my first blog post, marking the start of my exciting journey to become a Kaggle Grandmaster. Setting out on this path, I look forward to meeting with more friends who are equally passionate about data science. Together, we will dive into the fascinating world of machine learning, uncover valuable insights, and strive to make a meaningful impact in the field."
 
 ### [比赛内容](https://www.kaggle.com/competitions/llm-prompt-recovery)
 我首先在这一篇blog中会先简单介绍我们团队的最终提交方案
