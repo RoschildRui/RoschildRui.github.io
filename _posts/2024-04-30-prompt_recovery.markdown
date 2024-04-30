@@ -24,5 +24,6 @@ catalog:      true
 将三个模型还原的提示词集成在一起作为最终的预测结果
 
 ### 数据
+
 **reference**
-[https://www.kaggle.com/code/tomooinubushi/all-in-one-dataset-with-embedding/notebook]
+- https://www.kaggle.com/code/tomooinubushi/all-in-one-dataset-with-embedding/notebook
