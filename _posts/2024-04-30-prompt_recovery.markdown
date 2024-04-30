@@ -61,77 +61,46 @@ id,rewrite_prompt
 我将通过一个具体的数学例子来展示锐化余弦相似度与传统余弦相似度之间的区别。进而更好地理解比赛评价指标的倾向性。
 
 ```markdown
-**示例向量**
-
+### 示例向量
 假设我们有两对向量，一对较为相似，另一对较为不相似：
 
 - 向量对A（较为相似）:
-  - \(\vec{u} = [1, 2, 3]\)
-  - \(\vec{v} = [1, 2, 2.9]\)
+  -  $\vec{u}$ = [1, 2, 3] 
+  -  $\vec{v}$ = [1, 2, 2.9] 
 
 - 向量对B（较为不相似）:
-  - \(\vec{x} = [1, 2, 3]\)
-  - \(\vec{y} = [3, 2, 1]\)
+  -  $\vec{x}$ = [1, 2, 3] 
+  -  $\vec{y}$ = [3, 2, 1] 
 
-**计算余弦相似度**
+### 计算余弦相似度
 
 余弦相似度公式为：
+$\text{cosine similarity}$ = $\frac{\vec{a} \cdot \vec{b}}{\|\vec{a}\| \|\vec{b}\|}$
 
-\[
-\text{cosine similarity} = \frac{\vec{a} \cdot \vec{b}}{\|\vec{a}\| \|\vec{b}\|}
-\]
-
-其中 \(\vec{a} \cdot \vec{b}\) 是向量的点积，\(\|\vec{a}\|\) 和 \(\|\vec{b}\|\) 是向量的模。
+其中 $\vec{a} \cdot \vec{b} $ 是向量点积，$ \|\vec{a}\| $ 和 $ \|\vec{b}\| $ 是向量的模。
 
 对于向量对A和B，计算余弦相似度：
 
 - 对A:
-
-  \[
-  \vec{u} \cdot \vec{v} = 1 \times 1 + 2 \times 2 + 3 \times 2.9 = 1 + 4 + 8.7 = 13.7
-  \]
-
-  \[
-  \|\vec{u}\| = \sqrt{1^2 + 2^2 + 3^2} = \sqrt{14}
-  \]
-
-  \[
-  \|\vec{v}\| = \sqrt{1^2 + 2^2 + 2.9^2} \approx \sqrt{13.61}
-  \]
-
-  \[
-  \text{cosine similarity}_{A} = \frac{13.7}{\sqrt{14} \times \sqrt{13.61}} \approx 0.994
-  \]
+  $ \vec{u} \cdot \vec{v} = 1*1 + 2*2 + 3*2.9 = 1 + 4 + 8.7 = 13.7 $
+  $ \|\vec{u}\| = \sqrt{1^2 + 2^2 + 3^2} = \sqrt{14} $
+  $ \|\vec{v}\| = \sqrt{1^2 + 2^2 + 2.9^2} \approx \sqrt{13.61} $
+  $ \text{cosine similarity}_{A} = \frac{13.7}{\sqrt{14} \times \sqrt{13.61}} \approx 0.994 $
 
 - 对B:
+  $ \vec{x} \cdot \vec{y} = 1*3 + 2*2 + 3*1 = 3 + 4 + 3 = 10 $
+  $ \|\vec{x}\| = \sqrt{14}, \|\vec{y}\| = \sqrt{14} $
+  $ \text{cosine similarity}_{B} = \frac{10}{14} \approx 0.535 $
 
-  \[
-  \vec{x} \cdot \vec{y} = 1 \times 3 + 2 \times 2 + 3 \times 1 = 3 + 4 + 3 = 10
-  \]
+### 应用锐化处理（$ p = 3 $）
 
-  \[
-  \|\vec{x}\| = \sqrt{14}, \|\vec{y}\| = \sqrt{14}
-  \]
-
-  \[
-  \text{cosine similarity}_{B} = \frac{10}{14} \approx 0.535
-  \]
-
-**应用锐化处理（\(p = 3\)）**
-
-锐化余弦相似度为 \(\text{cosine similarity}^p\)，这里取 \(p = 3\)：
+锐化余弦相似度为 $ \text{cosine similarity}^p $，取 $ p = 3 $：
 
 - 对A:
-
-  \[
-  \text{sharpened cosine similarity}_{A} = 0.994^3 \approx 0.982
-  \]
+  $ \text{sharpened cosine similarity}_{A} = 0.994^3 \approx 0.982 $
 
 - 对B:
-
-  \[
-  \text{sharpened cosine similarity}_{B} = 0.535^3 \approx 0.153
-  \]
+  $ \text{sharpened cosine similarity}_{B} = 0.535^3 \approx 0.153 $
 ```
 **分析结果**
 
