@@ -8,7 +8,7 @@ catalog:      true
 ---
 > “这是我的第一个blog，希望在这一路上能认识更多志同道合的朋友”
 
-> "This is my first blog post. Setting out on this path, I am looking forward to meeting more friends who are equally passionate about data science. Together, we will dive into the fascinating world of machine learning, uncover valuable insights, and strive to make a meaningful impact in the field."
+> "This is my first blog post. Setting out on this path, I am looking forward to meeting more friends who also have greate passion on data science. Together, we will dive into the fascinating world of data, uncover valuable and deeper insights on this Earth, and strive to make a meaningful impact to make people life great 'again' !!!"
 
 ### [比赛内容](https://www.kaggle.com/competitions/llm-prompt-recovery)
 我首先在这一篇blog中会先简单介绍我们团队的最终提交方案
