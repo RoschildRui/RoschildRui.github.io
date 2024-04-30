@@ -29,6 +29,6 @@ catalog:      true
 ### 数据
 
 **reference**
-- https://www.kaggle.com/code/tomooinubushi/all-in-one-dataset-with-embedding/notebook
-- https://huggingface.co/datasets/Skylion007/openwebtext
-- https://huggingface.co/datasets/euclaise/writingprompts/viewer/default/train?p=1
+- [https://www.kaggle.com/code/tomooinubushi/all-in-one-dataset-with-embedding/notebook](https://huggingface.co/datasets/Skylion007/openwebtext)
+- [https://huggingface.co/datasets/Skylion007/openwebtext]
+- [https://huggingface.co/datasets/euclaise/writingprompts/viewer/default/train?p=1]
