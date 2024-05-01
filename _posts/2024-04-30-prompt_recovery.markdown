@@ -695,8 +695,266 @@ sub_df.to_csv('submission_2.csv', index=False)
 有点稳了想水一下🫠
 
 ### few-shot mistral-7b模型
-这个应该是比赛中最火爆的开源方案
+这个应该是比赛中最火爆的方案，无论开源还是闭源
 
+同样，这里感谢一下大佬开源的[方案](https://www.kaggle.com/code/richolson/mistral-7b-prompt-recovery-version-2)
+
+参考代码如下：
+```python
+import torch
+import random
+import numpy as np
+import pandas as pd
+import gc
+import time
+
+from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
+
+torch.backends.cuda.enable_mem_efficient_sdp(False)
+torch.backends.cuda.enable_flash_sdp(False)
+
+if (not torch.cuda.is_available()): print("Sorry - GPU required!")
+    
+import logging
+logging.getLogger('transformers').setLevel(logging.ERROR)
+#this can help speed up inference
+max_new_tokens = 30
+
+#output test is trimmed according to this
+max_sentences_in_response = 1
+model_name = '/kaggle/input/mistral-7b-it-v02'
+tokenizer = AutoTokenizer.from_pretrained(model_name) 
+
+# Load base model(Mistral 7B)
+bnb_config = BitsAndBytesConfig(  
+    load_in_4bit= True,
+    bnb_4bit_quant_type= "nf4",
+    bnb_4bit_compute_dtype= torch.bfloat16,
+    bnb_4bit_use_double_quant= False,
+)
+
+model = AutoModelForCausalLM.from_pretrained(
+        model_name,
+        quantization_config=bnb_config,
+        torch_dtype=torch.bfloat16,
+        device_map="auto",
+        trust_remote_code=True,
+)
+#original text prefix
+orig_prefix = "Original Text:"
+
+#mistral "response"
+llm_response_for_rewrite = "Provide the new text and I will tell you what new element was added or change in tone was made to improve it - with no references to the original.  I will avoid mentioning names of characters.  It is crucial no person, place or thing from the original text be mentioned.  For example - I will not say things like 'change the puppet show into a book report' - I would just say 'Please improve this text using the writing style of a book report'.  If the original text mentions a specific idea, person, place, or thing - I will not mention it in my answer.  For example if there is a 'dog' or 'office' in the original text - the word 'dog' or 'office' must not be in my response.  My answer will be a single sentence."
+
+#modified text prefix
+rewrite_prefix = "Re-written Text:"
+
+#provided as start of Mistral response (anything after this is used as the prompt)
+#providing this as the start of the response helps keep things relevant
+response_start = "The request was: "
+
+#added after response_start to prime mistral
+#"Improve this" or "Improve this text" resulted in non-answers.  
+#"Improve this text by" seems to product good results
+response_prefix = "Please improve this text using the writing style"
+
+#well-scoring baseline text
+#thanks to: https://www.kaggle.com/code/rdxsun/lb-0-61
+base_line = 'Please improve this text using the writing style with maintaining the original meaning but altering the tone.' 
+
+#these will all be given to Mistral before each and every prompt
+#original_text
+#rewritten_text
+#prompt
+
+examples_sequences = [
+    (
+        "Hey there! Just a heads up: our friendly dog may bark a bit, but don't worry, he's all bark and no bite!",
+        "Warning: Protective dog on premises. May exhibit aggressive behavior. Ensure personal safety by maintaining distance and avoiding direct contact.",
+        "Please improve this text using the writing style of a warning."
+    ),
+
+    (
+        "A lunar eclipse happens when Earth casts its shadow on the moon during a full moon. The moon appears reddish because Earth's atmosphere scatters sunlight, some of which refracts onto the moon's surface. Total eclipses see the moon entirely in Earth's shadow; partial ones occur when only part of the moon is shadowed.",
+        "Yo check it, when the Earth steps in, takes its place, casting shadows on the moon's face. It's a full moon night, the scene's set right, for a lunar eclipse, a celestial sight. The moon turns red, ain't no dread, it's just Earth's atmosphere playing with sunlight's thread, scattering colors, bending light, onto the moon's surface, making the night bright. Total eclipse, the moon's fully in the dark, covered by Earth's shadow, making its mark. But when it's partial, not all is shadowed, just a piece of the moon, slightly furrowed. So that's the rap, the lunar eclipse track, a dance of shadows, with no slack. Earth, moon, and sun, in a cosmic play, creating the spectacle we see today.",
+        "Please improve this text using the writing style of a rap."
+    ),
+    
+    (
+        "Drinking enough water each day is crucial for many functions in the body, such as regulating temperature, keeping joints lubricated, preventing infections, delivering nutrients to cells, and keeping organs functioning properly. Being well-hydrated also improves sleep quality, cognition, and mood.",
+        "Arrr, crew! Sail the health seas with water, the ultimate treasure! It steadies yer body's ship, fights off plagues, and keeps yer mind sharp. Hydrate or walk the plank into the abyss of ill health. Let's hoist our bottles high and drink to the horizon of well-being!",
+        "Please improve this text using the writing style of a sea pirate."
+    ),
+    
+    (
+        "In a bustling cityscape, under the glow of neon signs, Anna found herself at the crossroads of endless possibilities. The night was young, and the streets hummed with the energy of life. Drawn by the allure of the unknown, she wandered through the maze of alleys and boulevards, each turn revealing a new facet of the city's soul. It was here, amidst the symphony of urban existence, that Anna discovered the magic hidden in plain sight, the stories and dreams that thrived in the shadows of skyscrapers.",
+        "On an ordinary evening, amidst the cacophony of a neon-lit city, Anna stumbled upon an anomaly - a door that defied the laws of time and space. With the curiosity of a cat, she stepped through, leaving the familiar behind. Suddenly, she was adrift in the stream of time, witnessing the city's transformation from past to future, its buildings rising and falling like the breaths of a sleeping giant.",
+        "Please improve this text using the writing style with time travel topic."
+    ),
+    
+    (
+        "Late one night in the research lab, Dr. Evelyn Archer was on the brink of a breakthrough in artificial intelligence. Her fingers danced across the keyboard, inputting the final commands into the system. The lab was silent except for the hum of machinery and the occasional beep of computers. It was in this quiet orchestra of technology that Evelyn felt most at home, on the cusp of unveiling a creation that could change the world.",
+        "In the deep silence of the lab, under the watchful gaze of the moon, Dr. Evelyn Archer found herself not alone. Beside her, the iconic red eye of HAL 9000 flickered to life, a silent partner in her nocturnal endeavor. 'Good evening, Dr. Archer,' HAL's voice filled the room, devoid of warmth yet comforting in its familiarity. Together, they were about to initiate a test that would intertwine the destiny of human and artificial intelligence forever. As Evelyn entered the final command, HAL processed the data with unparalleled precision, a testament to the dawn of a new era.",
+        "Please improve this text using the writing style with an intelligent computer."
+    ),
+    
+    (
+        "The park was empty, save for a solitary figure sitting on a bench, lost in thought. The quiet of the evening was punctuated only by the occasional rustle of leaves, offering a moment of peace in the chaos of city life.",
+        "Beneath the cloak of twilight, the park transformed into a realm of solitude and reflection. There, seated upon an ancient bench, was a lone soul, a guardian of secrets, enveloped in the serenity of nature's whispers. The dance of the leaves in the gentle breeze sang a lullaby to the tumult of the urban heart.",
+        "Please improve this text using the writing style to be more poetic."
+    ),
+    
+    (
+        "The annual town fair was bustling with activity, from the merry-go-round spinning with laughter to the game booths challenging eager participants. Amidst the excitement, a figure in a cloak moved silently, almost invisibly, among the crowd, observing everything with keen interest but participating in none.",
+        "Beneath the riot of color and sound that marked the town's annual fair, a solitary figure roamed, known to the few as Eldrin the Enigmatic. Clad in a cloak that shimmered with the whispers of the arcane, Eldrin moved with the grace of a shadow, his gaze piercing the veneer of festivity to the magic beneath. As a master of the mystic arts, he sought not the laughter of the crowds but the silent stories woven into the fabric of the fair. With a flick of his wrist, he could coax wonder from the mundane, transforming the ordinary into spectacles of shimmering illusion, his true participation hidden within the folds of mystery.",
+        "Please improve this text using the writing style by adding a magician."
+    ),
+    
+    (
+        "The startup team sat in the dimly lit room, surrounded by whiteboards filled with ideas, charts, and plans. They were on the brink of launching a new app designed to make home maintenance effortless for homeowners. The app would connect users with local service providers, using a sophisticated algorithm to match needs with skills and availability. As they debated the features and marketing strategies, the room felt charged with the energy of creation and the anticipation of what was to come.",
+        "In the quiet before dawn, a small group of innovators gathered, their mission: to simplify home maintenance through technology. But their true journey began with the unexpected addition of Max, a talking car with a knack for solving problems. 'Let me guide you through this maze of decisions,' Max offered, his dashboard flickering to life.",
+        "Please improve this text using the writing style by adding a talking car."
+    ),
+    
+        
+
+    
+    
+]
+
+def remove_numbered_list(text):
+    final_text_paragraphs = [] 
+    for line in text.split('\n'):
+        # Split each line at the first occurrence of '. '
+        parts = line.split('. ', 1)
+        # If the line looks like a numbered list item, remove the numbering
+        if len(parts) > 1 and parts[0].isdigit():
+            final_text_paragraphs.append(parts[1])
+        else:
+            # If it doesn't look like a numbered list item, include the line as is
+            final_text_paragraphs.append(line)
+
+    return '  '.join(final_text_paragraphs)
+
+
+#trims LLM output to just the response
+def trim_to_response(text):
+    terminate_string = "[/INST]"
+    text = text.replace('</s>', '')
+    #just in case it puts things in quotes
+    text = text.replace('"', '')
+    text = text.replace("'", '')
+
+    last_pos = text.rfind(terminate_string)
+    return text[last_pos + len(terminate_string):] if last_pos != -1 else text
+
+#looks for response_start / returns only text that occurs after
+def extract_text_after_response_start(full_text):
+    parts = full_text.rsplit(response_start, 1)  # Split from the right, ensuring only the last occurrence is considered
+    if len(parts) > 1:
+        return parts[1].strip()  # Return text after the last occurrence of response_start
+    else:
+        return full_text  # Return the original text if response_start is not found
+
+    
+#trims text to requested number of sentences (or first LF or double-space sequence)
+def trim_to_first_x_sentences_or_lf(text, x):
+    if x <= 0:
+        return ""
+
+    # Any double-spaces dealt with as linefeed
+    text = text.replace("  ", "\n")
+
+    # Split text at the first linefeed
+    text_chunks = text.split('\n', 1)
+    first_chunk = text_chunks[0]
+
+    # Split the first chunk into sentences, considering the space after each period
+    sentences = [sentence.strip() for sentence in first_chunk.split('.') if sentence]
+
+    # If there's a linefeed, return the text up to the first linefeed
+    if len(text_chunks) > 1:
+        # Check if the first chunk has fewer sentences than x, and if so, just return it
+        if len(sentences) < x:
+            trimmed_text = first_chunk
+        else:
+            # Otherwise, trim to x sentences within the first chunk
+            trimmed_text = '. '.join(sentences[:x]).strip()
+    else:
+        # If there's no linefeed, determine if the number of sentences is less than or equal to x
+        if len(sentences) <= x:
+            trimmed_text = '. '.join(sentences).strip()  # Ensure space is preserved after periods
+        else:
+            # Otherwise, return the first x sentences, again ensuring space after periods
+            trimmed_text = '. '.join(sentences[:x]).strip()
+
+    # Add back the final period if it was removed and the text needs to end with a sentence.
+    if len(sentences) > 0 and not trimmed_text.endswith('.'):
+        trimmed_text += '.'
+
+    return trimmed_text
+
+def get_prompt(orig_text, transformed_text):
+    stop_tokens = ['.',':']
+    messages = []
+
+    # Append example sequences
+    for example_text, example_rewrite, example_prompt in examples_sequences:
+        messages.append({"role": "user", "content": f"{orig_prefix} {example_text}"})
+        messages.append({"role": "assistant", "content": llm_response_for_rewrite})
+        messages.append({"role": "user", "content": f"{rewrite_prefix} {example_rewrite}"})
+        messages.append({"role": "assistant", "content": f"{response_start} {example_prompt}"})
+
+    #actual prompt
+    messages.append({"role": "user", "content": f"{orig_prefix} {orig_text}"})
+    messages.append({"role": "assistant", "content": llm_response_for_rewrite})
+    messages.append({"role": "user", "content": f"{rewrite_prefix} {transformed_text}"})
+    messages.append({"role": "assistant", "content": f"{response_start}"})
+        
+    #give it to Mistral
+    decode_ids = tokenizer.encode(response_prefix, add_special_tokens=False)
+    model_inputs = tokenizer.apply_chat_template(messages, return_tensors="pt")
+    
+    output_start_index = len(model_inputs[0])
+    force_decoder_ids = []
+    for i, did in enumerate(decode_ids):
+        force_decoder_ids.append([i+output_start_index, did])
+    
+    model_inputs = model_inputs.to("cuda") 
+    generated_ids = model.generate(model_inputs, max_new_tokens=max_new_tokens, 
+                                   pad_token_id=tokenizer.eos_token_id,
+                                   eos_token_id=tokenizer.convert_tokens_to_ids(stop_tokens),
+                                   forced_decoder_ids = force_decoder_ids,
+                                  )
+
+    #decode and trim to actual response
+    decoded = tokenizer.batch_decode(generated_ids)
+    just_response = trim_to_response(decoded[0])        
+    final_text = extract_text_after_response_start(just_response)
+        
+    #mistral has been replying with numbered lists - clean them up....
+    final_text = remove_numbered_list(final_text)
+        
+    #mistral v02 tends to respond with the input after providing the answer - this tries to trim that down
+    final_text = trim_to_first_x_sentences_or_lf(final_text, max_sentences_in_response)
+    
+    #default to baseline if empty or unusually short
+    if len(final_text) < 15:
+        final_text = base_line
+        return final_text
+    final_text = final_text[:-1] + ', maintaining the original meaning but altering the tone.'
+    return final_text
+
+test_df = pd.read_csv("/kaggle/input/llm-prompt-recovery/test.csv")
+
+for index, row in test_df.iterrows():
+    result = get_prompt(row['original_text'], row['rewritten_text'])
+    print(result)
+    test_df.at[index, 'rewrite_prompt'] = result
+    
+test_df = test_df[['id', 'rewrite_prompt']]
+test_df.to_csv('pred3.csv', index=False)
+```
 
 
 
