@@ -86,52 +86,41 @@ $$
 
 - 对A:
 
-$$
+```math
 \vec{u} \cdot \vec{v} = 1 \times 1 + 2 \times 2 + 3 \times 2.9 = 1 + 4 + 8.7 = 13.7
-$$
 
-$$
 \|\vec{u}\| = \sqrt{1^2 + 2^2 + 3^2} = \sqrt{14}
-$$
 
-$$
 \|\vec{v}\| = \sqrt{1^2 + 2^2 + 2.9^2} \approx \sqrt{13.61}
-$$
 
-$$
 \text{cosine similarity}_{A} = \frac{13.7}{\sqrt{14} \times \sqrt{13.61}} \approx 0.994
-$$
+```
 
 - 对B:
 
-$$
+```math
 \vec{x} \cdot \vec{y} = 1 \times 3 + 2 \times 2 + 3 \times 1 = 3 + 4 + 3 = 10
-$$
 
-$$
 \|\vec{x}\| = \sqrt{14}, \|\vec{y}\| = \sqrt{14}
-$$
 
-$$
 \text{cosine similarity}_{B} = \frac{10}{14} \approx 0.535
-$$
+```
 
-**应用锐化处理（$p = 3$）**
+**应用锐化处理（$`p = 3`$）**
 
-锐化余弦相似度为 $\text{cosine similarity}^p$，这里取 $p = 3$：
+锐化余弦相似度为 $`\text{cosine similarity}^p`$，这里取 $`p = 3`$：
 
 - 对A:
 
-$$
+```math
 \text{sharpened cosine similarity}_{A} = 0.994^3 \approx 0.982
-$$
+```
 
 - 对B:
 
-$$
+```math
 \text{sharpened cosine similarity}_{B} = 0.535^3 \approx 0.153
-$$
-
+```
 
 **分析结果**
 
