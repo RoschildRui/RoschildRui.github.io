@@ -92,12 +92,9 @@ $$
 ```math
 \vec{u} \cdot \vec{v} = 1 \times 1 + 2 \times 2 + 3 \times 2.9 = 1 + 4 + 8.7 = 13.7
 
-
 \|\vec{u}\| = \sqrt{1^2 + 2^2 + 3^2} = \sqrt{14}
 
-
 \|\vec{v}\| = \sqrt{1^2 + 2^2 + 2.9^2} \approx \sqrt{13.61}
-
 
 \text{cosine similarity}_{A} = \frac{13.7}{\sqrt{14} \times \sqrt{13.61}} \approx 0.994
 ```
