@@ -487,13 +487,86 @@ values = pred_prompts
 submission = pd.DataFrame()
 submission["id"] = test_df["id"]
 submission["rewrite_prompt"] = values
-submission.to_csv("pred1.csv", index=False)
+submission.to_csv("submission_1.csv", index=False)
 ```
 
 好了终于把第一个模型写完了
 ![image](https://github.com/RoschildRui/RoschildRui.github.io/assets/146306438/509cd940-f1b4-4e54-a19b-5a010aa0a38e)
 
-### 微调[phi](https://www.kaggle.com/models/Microsoft/phi/Transformers/2/1)模型
+### 微调[phi](https://www.kaggle.com/models/Microsoft/phi/Transformers/2/1)
+思路来源于这位大佬开源的[notebook](https://www.kaggle.com/code/mozhiwenmzw/0-61-llmpr-phi2-sft-model-generate-infer/notebook)
+
+同时感谢这位大佬开源的[mean prompt](https://www.kaggle.com/code/seifachour12/lb-score-0-63)
+
+在看完大佬的笔记本后，我们先尝试自己通过我们自己的私有数据集训练phi的adapter层进而使得它对于这个任务更加适用
+示例代码：
+```python
+
+```
+但是我们发现不管在phi模型的顶层还是中间层训练adapter层似乎都无法达到大佬开源版本的效果😅
+
+```python
+import numpy as np
+import pandas as pd
+from tqdm.auto import tqdm
+import torch
+from peft import PeftConfig, PeftModel
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+input_token_len = 1024
+output_token_len = 100
+test_df = pd.read_csv('/kaggle/input/llm-prompt-recovery/test.csv')
+base_model_name = "/kaggle/input/phi/transformers/2/1"#/kaggle/input/phi/transformers/2/1
+adapter_model_name = "/kaggle/input/phi2-public-data-sft-adapter/pytorch/public-data-sft/1/phi2_public_data_sft/"
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+tokenizer = AutoTokenizer.from_pretrained(base_model_name,trust_remote_code=True)
+
+if tokenizer.pad_token is None:
+    tokenizer.pad_token = tokenizer.eos_token
+    
+model = AutoModelForCausalLM.from_pretrained(base_model_name,trust_remote_code=True)
+model = PeftModel.from_pretrained(model, adapter_model_name)
+model.to(device)
+model.eval()
+
+def text_generate(ori_text, rew_text,model, tokenizer, stop_tokens=['.',';',':','<|endoftext|>'], input_max_len=512, output_len=20, device='cuda'):
+    prompt = f"Instruct: Original Text:{ori_text}\nRewritten Text:{rew_text}\nWrite a prompt that was likely given to the LLM to rewrite original text to rewritten text.\nOutput:"
+    inputs = tokenizer(prompt, max_length=input_max_len, truncation=True, return_tensors="pt", return_attention_mask=False)
+    output_start_index = len(inputs.input_ids[0])
+    inputs = {k:v.to(device) for k,v in inputs.items()}
+    outputs = model.generate(**inputs,
+                             do_sample=False,
+                             max_new_tokens=output_len,
+                             pad_token_id=tokenizer.pad_token_id,
+                             eos_token_id=tokenizer.convert_tokens_to_ids(stop_tokens),
+                            )
+    text = tokenizer.batch_decode(outputs,skip_special_tokens=True,clean_up_tokenization_spaces=False)[0]
+    start_index = text.find('Output:')
+    generated_text = text[start_index+len('Output:'):].strip()[:-1]
+    return generated_text
+
+rewrite_prompts = []
+for i, row in tqdm(test_df.iterrows(), total=len(test_df)):
+    prompt = mean_prompt = 'Please improve the following text using the writing style of, maintaining the original meaning but altering the tone.'
+    try:
+        prompt = text_generate(row['original_text'],
+                               row['rewritten_text'],
+                               model,
+                               tokenizer,
+                               ['.',';',':','<|endoftext|>'],
+                               input_token_len,
+                               output_token_len,
+                               device,
+                              )
+    except:
+        pass
+        
+    rewrite_prompts.append(prompt)
+
+test_df['rewrite_prompt'] = rewrite_prompts
+sub_df = test_df[['id', 'rewrite_prompt']]
+sub_df.to_csv('submission_2.csv', index=False)
+```
 
 
 
