@@ -1,6 +1,6 @@
 ---
 layout:       post
-title:        "[LLM Prompt Recovery](PV:0.6694)银牌方案总结(1)"
+title:        "[LLM Prompt Recovery](PV:0.67)银牌方案总结(1)"
 author:       "Roschild.Rui"
 header-style: text
 catalog:      true
@@ -11,7 +11,7 @@ catalog:      true
 > "This is my first blog post. Setting out on this path, I am looking forward to meeting more friends who also have greate passion on data science. Together, we will dive into the fascinating world of data, uncover valuable and deeper insights on this Earth, and strive to make a meaningful impact to make people life great 'again' !!!"
 
 ### 写在前面
-在这一篇blog中我会先简单介绍我们团队的最终提交方案**(`PV=0.6694`,`PB=0.6659`)**
+在这一篇blog中我会先简单介绍我们团队的最终提交方案**(`PV=0.67`,`PB=0.66`)**
 
 随后整个方案的迭代形成过程将在我接下来的blog中逐一呈现
 
@@ -966,7 +966,7 @@ test_df.to_csv('submission_3.csv', index=False)
 ```
 
 ### 集成三个模型
-我们将三个模型的预测结果进行拼接最终得到最后的结果
+我们将三个模型的预测结果进行拼接最终得到最后的结果🤗
 ```python
 import pandas as pd
 sub_1 = pd.read_csv('submission_1.csv').sort_values(['id']).reset_index(drop=True).fillna('')
@@ -978,8 +978,15 @@ print(sub['rewrite_prompt'].iloc[0])
 sub.to_csv('submission.csv', index=False)
 ```
 
+### 总结
+在反思为什么集成三个模型的预测结果会效果好的时候，我从私有数据集中的数据提炼30条数据，分别使用3个模型（这三个模型的`PB`分数十分接近，`deberta`的`PB=0.64`，`mistral`的`PB=0.65`,`mistral`的`PB=0.65`)进行预测，他们的预测结果都存在一些很明显的差异，也就是说他们生成的句子的某些特征是正交的，于是我想可能是由于这些特征在经过`sentence-t5`的encode后拉近了与目标提示词的距离，进而提高了`PB`分数。
 
+在比赛结束后我从第一的方案分享中看到了这样一幅图
+![image](https://github.com/RoschildRui/RoschildRui.github.io/assets/146306438/e4d2d756-cf67-4fd8-8b97-faafaba2d251)
+通过这幅图我认为我对于集成方案的理解一定程度上是可解释的
 
+### 写在后面
+完整读完的朋友
 
 
 
