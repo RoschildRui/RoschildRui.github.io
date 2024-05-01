@@ -305,6 +305,8 @@ class config:
 模型结构中有两个tricks
 - 1.直接使用deberta的预训练权重提取原始文本和重写文本的特征，我们发现全参数训练和使用预训练权重在测试集上的表现**没有显著的差别**，在交叉验证的时候甚至发现在某些时候会**弱于**预训练权重，于是我们决定直接使用**预训练的权重**并设计了一个**头结构**，让这个头能从底层模型deberta中提取的丰富特征中学习到有用的表示，进而通过变换和压缩，生成能够有效预测重写提示的嵌入向量。关于为什么将中间层维度设为32256，简单来说就是玄学😅，硬要说就是768*42，一般将**中间层向量维度设为嵌入向量维度的n倍**会取得不错的效果😊，这里我们直接从  `n=36`开始尝试最终发现`n=42`取得了不错的效果。（我的评价是经验，因为我们既希望模型能从deberta提取到的特征中学到**更丰富的语义信息**又希望不要**overfitting**，如果觉得太玄学，直接使用后面两个模型集成效果也足够取得不错的效果**(`PV=0.6573`,`PB=0.6569`在LB中私榜排81名，同样是银牌位)**，这个seq2seq模型就当看一个乐子了😇）
 - 2.在设计的头结构中使用BatchNorm代替LayNorm（在多次交叉验证中平均涨点**0.003**），这我觉得只能算是，**四个特定**，特定任务、特定嵌入模型、特定评价指标、特定数据集的trick （我将batch_size设为2依旧如此） 🤔
+
+参考代码如下：
 ```python
 class CustomModel(nn.Module):
     def __init__(self, cfg, config_path=None, mode: str ="train", pretrained=False): 
@@ -419,6 +421,7 @@ class CustomModel(nn.Module):
 我们发现当`batch_size=2`、不打开GRADIENT_CHECKPOINTING是比 `batch_size=16`并打开GRADIENT_CHECKPOINTING快，并且**测试集评估效果没有显著的影响**（有些时候提成了），于是我们选择不打开checkpoint
 
 #### 模型推理
+参考代码如下：
 ```python
 def inference_fn(model_weight, config, test_df, tokenizer, device, model_config):
     # ======== DATASETS ==========
@@ -494,12 +497,12 @@ submission.to_csv("submission_1.csv", index=False)
 ![image](https://github.com/RoschildRui/RoschildRui.github.io/assets/146306438/509cd940-f1b4-4e54-a19b-5a010aa0a38e)
 
 ### 微调[phi](https://www.kaggle.com/models/Microsoft/phi/Transformers/2/1)
-思路来源于这位大佬开源的[Notebook](https://www.kaggle.com/code/mozhiwenmzw/0-61-llmpr-phi2-sft-model-generate-infer/notebook)和[Notebook](https://www.kaggle.com/code/mozhiwenmzw/0-61-llmpr-phi2-sft-model-training/notebook)
+思路来源于这位大佬开源的[Notebook1](https://www.kaggle.com/code/mozhiwenmzw/0-61-llmpr-phi2-sft-model-generate-infer/notebook)和[Notebook2](https://www.kaggle.com/code/mozhiwenmzw/0-61-llmpr-phi2-sft-model-training/notebook)
 
 同时感谢这位大佬开源的[Mean prompt](https://www.kaggle.com/code/seifachour12/lb-score-0-63)
 
 #### 训练adapter
-在看完大佬的笔记本后，我们先尝试自己通过我们自己的私有数据集训练phi的adapter层进而使得它对于这个任务更加适用
+在看完大佬的笔记本后，我们先尝试通过我们自己的私有数据集训练phi的adapter层进而使得它对于这个任务更加适用
 
 参考代码如下：
 ```python
@@ -617,9 +620,13 @@ trainer.save_model(model_save_path)
 tokenizer.save_pretrained(model_save_path)
 ```
 #### 利用adapter微调phi
-但是我们发现不管在phi模型的顶层还是中间层训练adapter似乎都无法达到大佬开源版本的效果（单模最高能到`PB=0.63`但是集成就会使得PB相对使用开源的adapter下降0.1左右）😅
+但是我们发现不管在phi模型的顶层还是中间层训练adapter似乎都无法达到大佬[开源版本](https://www.kaggle.com/models/mozhiwenmzw/phi2-public-data-sft-adapter/PyTorch/public-data-sft/1)的效果（单模最高能到`PB=0.63`但是集成就会使得PB相对使用开源的adapter下降0.1左右）😅
 
-所以最后我们直接使用开源的adapter进行微调
+所以最后我们直接使用开源的adapter进行微调phi
+
+我们对开源代码上进行了一些调整以针对我们最后的集成方案进行优化
+- 添加'.',';',':','<|endoftext|>' 作为生成文本的停止标记，**严格控制生成文本的时间**
+- 去除生成文本最后的符号，我们发现在集成预测结果的时候要严格控制句号的数目，去掉句号能在PB提高0.01分左右 🤠
 
 参考代码如下：
 ```python
@@ -633,7 +640,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 input_token_len = 1024
 output_token_len = 100
 test_df = pd.read_csv('/kaggle/input/llm-prompt-recovery/test.csv')
-base_model_name = "/kaggle/input/phi/transformers/2/1"#/kaggle/input/phi/transformers/2/1
+base_model_name = "/kaggle/input/phi/transformers/2/1"
 adapter_model_name = "/kaggle/input/phi2-public-data-sft-adapter/pytorch/public-data-sft/1/phi2_public_data_sft/"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 tokenizer = AutoTokenizer.from_pretrained(base_model_name,trust_remote_code=True)
