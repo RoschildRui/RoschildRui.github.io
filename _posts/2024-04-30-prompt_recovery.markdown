@@ -215,6 +215,8 @@ def fix_prompt(text):
 #### embedding数据
 将上述步骤处理好的数据，通过**sentence-t5-base**模型，生成训练集和测试集的embedding
 
+同时将上述数据中的unique prompt提示词整理为一个prompt文件，利用Meta开源的Faiss库将其转为prompt.index，对deberta模型预测结果进行相似度匹配进而输出**（关于为什么用这种方法这里只讲一点剩下的后面会详细讲解---这种方法涨点显著但是要求私有数据集构建完善，我们通过使用gpt-4生成了1500条高质量平均提示词（`PB=0.58`以上，同时在开源的数据集中找到了57000余条富有特征的提示词）**
+
 **参考代码如下：**
 ````python
 import pandas as pd
@@ -244,6 +246,32 @@ test_emb = test_emb.detach().cpu().numpy()
 test_emb = np.asarray(test_emb.astype('float32'))
 
 np.save('test_emb_sentence-t5.npy', test_emb)
+```
+
+```python
+import sys
+from sentence_transformers import SentenceTransformer, models
+import pandas as pd
+import gc
+import numpy as np
+import faiss
+import time
+from tqdm import tqdm
+
+df = pd.read_csv(f"prompts_df.csv",)
+contexts = list(df['rewrite_prompt'])
+
+model =  SentenceTransformer('sentence-transformers/sentence-t5-base')
+model.max_seq_length = 512
+
+encoded_data = model.encode(contexts, batch_size=32, device='cuda', show_progress_bar=True, convert_to_tensor=True, normalize_embeddings=True)
+encoded_data = encoded_data.detach().cpu().numpy()
+encoded_data = np.asarray(encoded_data.astype('float32'))
+df['rewrite_prompt'].to_csv('prompts_df.csv', index=False)
+
+index = faiss.IndexFlatIP(768)
+index.add(encoded_data)
+faiss.write_index(index, 'prompts_embedding.index')
 ```
 
 ### 训练deberta模型
@@ -386,12 +414,86 @@ class CustomModel(nn.Module):
 #### 模型训练
 上述deberta模型的训练在Autodl的4090上**一个epoch**大约在**6个小时左右**
 
-我们发现当`batch_size=2`是不打开GRADIENT_CHECKPOINTING是比 `batch_size=16`打开GRADIENT_CHECKPOINTING快，且**测试集评估效果没有显著的影响**
-
 ![image](https://github.com/RoschildRui/RoschildRui.github.io/assets/146306438/c10000e5-7c73-4b27-8d28-fdabf457d8c7)
 
+我们发现当`batch_size=2`、不打开GRADIENT_CHECKPOINTING是比 `batch_size=16`并打开GRADIENT_CHECKPOINTING快，并且**测试集评估效果没有显著的影响**（有些时候提成了），于是我们选择不打开checkpoint
 
+#### 模型推理
+```python
+def inference_fn(model_weight, config, test_df, tokenizer, device, model_config):
+    # ======== DATASETS ==========
+    test_dataset = CustomDataset(config, test_df, tokenizer)
+    
+    # ======== DATALOADERS ==========
+    test_loader = DataLoader(
+        test_dataset,
+        batch_size=config.BATCH_SIZE_TEST,
+        shuffle=False,
+        num_workers=0,
+        pin_memory=True, drop_last=False
+    )
+    
+    # ======== MODEL ==========
+    model = CustomModel(config, config_path=model_config, pretrained=False)
+    state = torch.load(model_weight)
+    model.load_state_dict(state)
+    model.to(device)
+    model.eval() # set model in evaluation mode
+    output_dict = {}
+    preds, ids = [], []
+    with tqdm(test_loader, unit="test_batch", desc='Test') as tqdm_test_loader:
+        for step, batch in enumerate(tqdm_test_loader):
+            ids_batch = batch.pop("id")
+            original_texts = to_device(collate(batch.pop("original_text")))
+            rewritten_texts = to_device(collate(batch.pop("rewritten_text")))
+            rewrite_prompts = []
+            batch_size = len(ids_batch)
+            targets = torch.ones(batch_size, device=device) # -1 for dissimilar, 1 for similar
+            with torch.no_grad():
+                y_preds, _ = model(original_texts, rewritten_texts, rewrite_prompts)            
+            preds.append(y_preds.to('cpu').numpy()) # save predictions
+            ids += ids_batch          
+    output_dict["predictions"] = np.concatenate(preds) 
+    output_dict["ids"] = ids
+    return output_dict
 
+preds = []
+
+for model_weight, model_config in zip(model_weights, model_configs):
+    predictions = inference_fn(model_weight, config, test_df, tokenizer, device, model_config)
+    predictions = predictions["predictions"]
+    predictions = torch.nn.functional.normalize(torch.from_numpy(predictions), p=2, dim=1).numpy()
+    preds.append(predictions)
+    
+preds = np.mean(preds, axis=0)
+
+import faiss
+from faiss import write_index, read_index, read_VectorTransform
+
+prompts_embedding_index = read_index("./prompts_embedding.index")
+search_score, search_index = prompts_embedding_index.search(preds, 1)
+prompts_df = pd.read_csv("./prompts_df.csv")
+prompts_df.head()
+
+pred_prompts = []
+
+for i, (scr, idx) in tqdm(enumerate(zip(search_score, search_index)), total=len(search_score)):
+    scr_idx = idx
+    p = prompts_df.loc[scr_idx, "rewrite_prompt"].tolist()
+    pred_prompts.append(''.join(p))
+
+values = pred_prompts
+
+submission = pd.DataFrame()
+submission["id"] = test_df["id"]
+submission["rewrite_prompt"] = values
+submission.to_csv("pred1.csv", index=False)
+```
+
+好了终于把第一个模型写完了
+![image](https://github.com/RoschildRui/RoschildRui.github.io/assets/146306438/509cd940-f1b4-4e54-a19b-5a010aa0a38e)
+
+###
 
 
 
