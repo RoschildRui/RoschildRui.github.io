@@ -64,14 +64,14 @@ id,rewrite_prompt
 
 假设我们有两对向量，一对较为相似，另一对较为不相似：
 
-- 向量对A（较为相似）:
+- 向量对A（相似）:
 
 ```math
   $\vec{u}$ = [1, 2, 3.0]
   $\vec{v}$ = [1, 2, 2.9]
 ```
 
-- 向量对B（较为不相似）:
+- 向量对B（不相似）:
 
 ```math
   $\vec{x}$ = [1, 2, 3]
@@ -215,7 +215,7 @@ def fix_prompt(text):
 #### embedding数据
 将上述步骤处理好的数据，通过**sentence-t5-base**模型，生成训练集和测试集的embedding
 
-同时将上述数据中的unique prompt提示词整理为一个prompt文件，利用Meta开源的Faiss库将其转为prompt.index，对deberta模型预测结果进行相似度匹配进而输出**（关于为什么用这种方法这里只讲一点剩下的后面会详细讲解---这种方法涨点显著但是要求私有数据集构建完善，我们通过使用gpt-4生成了1500条高质量平均提示词（`PB=0.58`以上，同时在开源的数据集中找到了57000余条富有特征的提示词）**
+同时将上述数据中的unique prompt提示词整理为一个prompt文件，利用Meta开源的Faiss库将其转为prompt.index，对deberta模型预测结果进行相似度匹配进而输出**（关于为什么用这种方法这里只讲一点剩下的后面会详细讲解---这种方法涨点显著但是要求私有数据集构建完善，我们通过使用提示词工程调用gpt-4生成了150条高质量平均提示词（`PB=0.58`以上，同时在开源的数据集中找到了1400000余条富有特征的提示词,没错就是140w条你没看错😀）**
 
 **参考代码如下：**
 ````python
@@ -494,16 +494,128 @@ submission.to_csv("submission_1.csv", index=False)
 ![image](https://github.com/RoschildRui/RoschildRui.github.io/assets/146306438/509cd940-f1b4-4e54-a19b-5a010aa0a38e)
 
 ### 微调[phi](https://www.kaggle.com/models/Microsoft/phi/Transformers/2/1)
-思路来源于这位大佬开源的[notebook](https://www.kaggle.com/code/mozhiwenmzw/0-61-llmpr-phi2-sft-model-generate-infer/notebook)
+思路来源于这位大佬开源的[Notebook](https://www.kaggle.com/code/mozhiwenmzw/0-61-llmpr-phi2-sft-model-generate-infer/notebook)和[Notebook](https://www.kaggle.com/code/mozhiwenmzw/0-61-llmpr-phi2-sft-model-training/notebook)
 
-同时感谢这位大佬开源的[mean prompt](https://www.kaggle.com/code/seifachour12/lb-score-0-63)
+同时感谢这位大佬开源的[Mean prompt](https://www.kaggle.com/code/seifachour12/lb-score-0-63)
 
 在看完大佬的笔记本后，我们先尝试自己通过我们自己的私有数据集训练phi的adapter层进而使得它对于这个任务更加适用
-示例代码：
-```python
 
+参考代码如下：
+```python
+import pandas as pd
+from sklearn.model_selection import train_test_split
+
+from datasets import Dataset
+from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
+from transformers import TrainingArguments
+
+from trl import SFTTrainer, DataCollatorForCompletionOnlyLM
+from peft import LoraConfig
+
+exp_name = 'phi2'
+data_path = '/kaggle/input/pr-data/train_clean.csv'
+model_path = '/kaggle/input/phi/transformers/2/1'
+output_path = f'outputs'
+model_save_path =  f'{exp_name}_adapter'
+
+epochs=5
+batch_size=1 # 2 
+max_seq_length=512 # 1024 
+lr = 1e-4
+
+df = pd.read_csv(data_path)
+train_df, val_df = train_test_split(df, test_size=0.1, random_state=42)
+train_df = train_df.reset_index(drop=True)
+val_df = val_df.reset_index(drop=True)
+
+train_ds = Dataset.from_pandas(train_df)
+val_ds = Dataset.from_pandas(val_df)
+
+tokenizer = AutoTokenizer.from_pretrained(model_path)
+tokenizer.pad_token = tokenizer.eos_token
+
+bnb_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_quant_type='nf4',
+        bnb_4bit_compute_dtype='float16',
+        bnb_4bit_use_double_quant=False,
+    )
+
+model = AutoModelForCausalLM.from_pretrained(model_path,
+                                             quantization_config=bnb_config,
+                                             trust_remote_code=True,
+                                             use_auth_token=True)
+
+model.config.gradient_checkpointing = False
+
+def token_len(text):
+    tokenized = tokenizer(text, return_length=True)
+    length = tokenized['length'][0]
+    return length
+
+def formatting_prompts_func(example):
+    output_texts = []
+    for i in range(len(example['rewritten_text'])):
+        ori_text = example['original_text'][i]
+        rew_text = example['rewritten_text'][i]
+        rew_prompt = example['rewrite_prompt'][i]
+        text = f"Instruct: Original Text:{ori_text}\nRewritten Text:{rew_text}\nWrite a prompt that was likely given to the LLM to rewrite original text into rewritten text.Output: {rew_prompt}"
+        if token_len(text) > max_seq_length:
+            continue
+        output_texts.append(text)
+    return output_texts
+
+response_template = "Output:"
+collator = DataCollatorForCompletionOnlyLM(response_template=response_template, 
+                                           tokenizer=tokenizer)
+
+peft_config = LoraConfig(
+    r=12,
+    lora_alpha=32,
+    lora_dropout=0.03,
+    bias="none",
+    task_type="CAUSAL_LM",
+    target_modules= ["q_proj", "k_proj", "v_proj", "dense"],
+)
+
+args = TrainingArguments(
+    output_dir = output_path,
+    fp16=True,
+    learning_rate=lr,
+    optim="adafactor",
+    num_train_epochs=epochs,
+    per_device_train_batch_size=batch_size,
+    per_device_eval_batch_size=batch_size*2,
+    gradient_accumulation_steps=8,
+    evaluation_strategy="epoch",
+    save_strategy="epoch",
+    save_total_limit=1,
+    logging_steps=50,
+    lr_scheduler_type="cosine",
+    warmup_ratio=0.1,
+    weight_decay=0.008,
+    report_to='none',
+    load_best_model_at_end=True,
+    metric_for_best_model="eval_loss",
+    )
+
+trainer = SFTTrainer(
+    model=model,
+    args = args,
+    max_seq_length=max_seq_length,
+    train_dataset=train_ds,
+    eval_dataset=val_ds,
+    formatting_func=formatting_prompts_func,
+    data_collator=collator,
+    peft_config=peft_config,
+)
+
+trainer.train()
+
+trainer.save_model(model_save_path)
+tokenizer.save_pretrained(model_save_path)
 ```
-但是我们发现不管在phi模型的顶层还是中间层训练adapter层似乎都无法达到大佬开源版本的效果😅
+但是我们发现不管在phi模型的顶层还是中间层训练adapter层似乎都无法达到大佬开源版本的效果（单模最高能到`PB=0.63`但是集成就会使得PB相对使用开源的adapter下降0.1左右）😅
 
 ```python
 import numpy as np
