@@ -700,12 +700,13 @@ sub_df.to_csv('submission_2.csv', index=False)
 
 同样，这里感谢一下开源的[方案](https://www.kaggle.com/code/richolson/mistral-7b-prompt-recovery-version-2)
 
-####few-shot限制条件
+#### few-shot限制条件
 - 1. 需要模型具有较高的基准能力，这场比赛中few-shot llama2-13b与few-show mistral-7b 在PB的差距约为0.02，在PV的差距在0.013以内
 ![image](https://github.com/RoschildRui/RoschildRui.github.io/assets/146306438/ec1cf9ea-ab7d-4bcb-b8a4-79da3c8fdc4d)
 上面的图是mistral官方提供的benchmarks对比图，我们认为这个任务主要需要大模型的核心能力为**Reasoning**、**Knowledge**、**Comprehension**
-- 2. 
+- 2. 是
 
+#### few-shot
 我们基于开源的方案做了2点改进：
 - 1.将`response_prefix = "Improve this text by"`
 参考代码如下：
