@@ -625,7 +625,7 @@ tokenizer.save_pretrained(model_save_path)
 所以最后我们直接使用开源的adapter进行微调phi
 
 我们对开源代码上进行了一些调整以针对我们最后的集成方案进行优化
-- 根据对生成文本的观察，添加符号“'.',';',':','<|endoftext|>'” 作为生成文本的停止标记，**严格控制生成文本的时间**
+- 根据对生成文本的观察，添加符号'.',';',':',“<|endoftext|>” 作为生成文本的停止标记，**严格控制生成文本的时间**
 - 去除生成文本最后的符号，我们发现在集成预测结果的时候要严格控制句号的数目，去掉句号能在PB提高0.01分左右 🤠
 
 参考代码如下：
@@ -691,6 +691,11 @@ test_df['rewrite_prompt'] = rewrite_prompts
 sub_df = test_df[['id', 'rewrite_prompt']]
 sub_df.to_csv('submission_2.csv', index=False)
 ```
+
+有点稳了想水一下🫠
+
+### few-shot mistral-7b模型
+这个应该是比赛中最火爆的开源方案
 
 
 
