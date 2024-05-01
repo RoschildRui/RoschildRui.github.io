@@ -78,13 +78,12 @@ $\vec{y} = [3, 2, 1]$
 **计算余弦相似度**
 
 余弦相似度公式为：
-
-$$
+```math
 \text{cosine similarity} = \frac{\vec{a} \cdot \vec{b}}{\|\vec{a}\| \|\vec{b}\|}
-$$
+```
 
 其中 $\vec{a} \cdot \vec{b}$ 是向量的点积，$\|\vec{a}\|$ 和 $\|\vec{b}\|$ 是向量的模。
-
+ 
 对于向量对A和B，计算余弦相似度：
 
 - 对A:
