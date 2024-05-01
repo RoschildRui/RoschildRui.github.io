@@ -65,10 +65,10 @@ id,rewrite_prompt
 假设我们有两对向量，一对较为相似，另一对较为不相似：
 
 - 向量对A（较为相似）:
-```markdown
-  -  $\vec{u}$ = [1, 2, 3] 
-  -  $\vec{v}$ = [1, 2, 2.9] 
-```
+
+-  $\vec{u}$ = [1, 2, 3] 
+-  $\vec{v}$ = [1, 2, 2.9] 
+
 - 向量对B（较为不相似）:
 ```markdown
   -  $\vec{x}$ = [1, 2, 3] 
@@ -88,7 +88,7 @@ $\text{cosine similarity}$ = $\frac{\vec{a} \cdot \vec{b}}{\|\vec{a}\| \|\vec{b}
 
 - 对A:
 
-```markdown
+```math
   $ \vec{u} \cdot \vec{v} = 1*1 + 2*2 + 3*2.9 = 1 + 4 + 8.7 = 13.7 $
   $ \|\vec{u}\| = \sqrt{1^2 + 2^2 + 3^2} = \sqrt{14} $
   $ \|\vec{v}\| = \sqrt{1^2 + 2^2 + 2.9^2} \approx \sqrt{13.61} $
@@ -97,7 +97,7 @@ $\text{cosine similarity}$ = $\frac{\vec{a} \cdot \vec{b}}{\|\vec{a}\| \|\vec{b}
 
 - 对B:
 
-```markdown
+```math
   $ \vec{x} \cdot \vec{y} = 1*3 + 2*2 + 3*1 = 3 + 4 + 3 = 10 $
   $ \|\vec{x}\| = \sqrt{14}, \|\vec{y}\| = \sqrt{14} $
   $ \text{cosine similarity}_{B} = \frac{10}{14} \approx 0.535 $
