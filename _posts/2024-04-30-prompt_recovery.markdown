@@ -698,9 +698,10 @@ sub_df.to_csv('submission_2.csv', index=False)
 ### few-shot mistral-7b模型
 这个应该是比赛中最火爆的方案，无论开源还是闭源
 
-同样，这里感谢一下开源的[方案](https://www.kaggle.com/code/richolson/mistral-7b-prompt-recovery-version-2)
+同样，这里感谢一下开源的[方案](https://www.kaggle.com/code/richolson/mistral-7b-prompt-recovery-version-2)分享🥳
 
 #### few-shot限制条件
+
 - 1. 需要模型具有较高的基准能力/这场比赛中few-shot llama2-13b与few-show mistral-7b 在PB的差距约为`0.02`，在PV的差距在`0.013`以内
 ![image](https://github.com/RoschildRui/RoschildRui.github.io/assets/146306438/ec1cf9ea-ab7d-4bcb-b8a4-79da3c8fdc4d)
 上面的图是mistral官方提供的benchmarks对比图，我们认为这个任务主要需要大模型的核心能力为**Reasoning**、**Knowledge**、**Comprehension**
@@ -964,6 +965,8 @@ test_df = test_df[['id', 'rewrite_prompt']]
 test_df.to_csv('submission_3.csv', index=False)
 ```
 
+### 集成三个模型
+我们将三个模型的预测结果进行
 
 
 
