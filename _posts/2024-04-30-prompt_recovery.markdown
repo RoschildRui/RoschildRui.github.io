@@ -49,7 +49,7 @@ id,rewrite_prompt
 ```
 
 
-### 方案总结
+### 方案预览
 - 1.构建基于deberta-v3-large的seq2seq模型
 - 2.构建合适的adapter层微调[phi2](https://www.kaggle.com/models/Microsoft/phi/Transformers/2/1)模型
 - 3.few-shot [mistral-7b-v2](https://www.kaggle.com/datasets/ahmadsaladin/mistral-7b-it-v02)模型
@@ -966,8 +966,17 @@ test_df.to_csv('submission_3.csv', index=False)
 ```
 
 ### 集成三个模型
-我们将三个模型的预测结果进行
-
+我们将三个模型的预测结果进行拼接最终得到最后的结果
+```python
+import pandas as pd
+sub_1 = pd.read_csv('submission_1.csv').sort_values(['id']).reset_index(drop=True).fillna('')
+sub_2 = pd.read_csv('submission_2.csv').sort_values(['id']).reset_index(drop=True).fillna('')
+sub_3 = pd.read_csv('submisiion_3.csv').sort_values(['id']).reset_index(drop=True).fillna('')
+sub = pd.DataFrame()
+sub['rewrite_prompt'] = sub_1['rewrite_prompt'].map(str)+' '+sub_2['rewrite_prompt'].map(str)+' '+sub_3['rewrite_prompt'].map(str)
+print(sub['rewrite_prompt'].iloc[0])
+sub.to_csv('submission.csv', index=False)
+```
 
 
 
