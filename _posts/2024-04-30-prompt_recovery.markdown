@@ -701,16 +701,19 @@ sub_df.to_csv('submission_2.csv', index=False)
 同样，这里感谢一下开源的[方案](https://www.kaggle.com/code/richolson/mistral-7b-prompt-recovery-version-2)
 
 #### few-shot限制条件
-- 1. 需要模型具有较高的基准能力，这场比赛中few-shot llama2-13b与few-show mistral-7b 在PB的差距约为0.02，在PV的差距在0.013以内
+- 1. 需要模型具有较高的基准能力/这场比赛中few-shot llama2-13b与few-show mistral-7b 在PB的差距约为`0.02`，在PV的差距在`0.013`以内
 ![image](https://github.com/RoschildRui/RoschildRui.github.io/assets/146306438/ec1cf9ea-ab7d-4bcb-b8a4-79da3c8fdc4d)
 上面的图是mistral官方提供的benchmarks对比图，我们认为这个任务主要需要大模型的核心能力为**Reasoning**、**Knowledge**、**Comprehension**
-- 2. 是
+- 2. 需要选取具有代表性和多样性的示例作为few-shot提示数据。这些示例需要能够涵盖任务可能的不同变体和复杂性，且要清晰传达任务的需求。庆幸的是，我们在众多discussion中学习提炼创造了多样可行的示例并与开源的示例加以结合实现了PB提升`0.01`，PV提升了`0.0072`（下面代码中将不会有我们自己构建的示例，因为我们对其中的一些点存在疑惑，我们将会在解决疑惑进行开源分享）😛
+- 3. 需要设计合适的提示词，使得大模型更加关注对于某一些特征的提取
 
 #### few-shot
-我们基于开源的方案做了2点改进：
-- 1.将`response_prefix = "Improve this text by"`
-参考代码如下：
+我们基于开源的方案做了3点改进：
+- 1.将`response_prefix = "Improve this text by"`改为`response_prefix = "Improve this text using the writing style"`使得模型更加关注writing style的特征提取
+- 2.指定大模型输出的`stop_tokens = ['.',':']`
+- 3.如果生成文本的长度低于15，使用PB高分Mean prompt作为替换，在所有未被替换的提示词末尾中添加`', maintaining the original meaning but altering the tone.'`
 
+参考代码如下：
 ```python
 import torch
 import random
