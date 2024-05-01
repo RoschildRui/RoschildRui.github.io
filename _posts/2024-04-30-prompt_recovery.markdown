@@ -66,16 +66,17 @@ id,rewrite_prompt
 
 - 向量对A（较为相似）:
 
-  \vec{u} = [1, 2, 3.0]
-  
-  \vec{v} = [1, 2, 2.9]
+```math
+  $\vec{u}$ = [1, 2, 3.0]
+  $\vec{v}$ = [1, 2, 2.9]
+```
 
 - 向量对B（较为不相似）:
 
-  \vec{x} = [1, 2, 3]
-  
-  \vec{y} = [3, 2, 1] 
-
+```math
+  $\vec{x}$ = [1, 2, 3]
+  $\vec{y}$ = [3, 2, 1] 
+```
 
 **计算余弦相似度**
 
@@ -109,13 +110,17 @@ $\text{cosine similarity}$ = $\frac{\vec{a} \cdot \vec{b}}{\|\vec{a}\| \|\vec{b}
 锐化余弦相似度为 $`\text{cosine similarity}^p`$，这里取 `p = 3`：
 
 - 对A:
+
 ```math
-$ \text{sharpened cosine similarity}_{A} = 0.994^3 \approx 0.982 $
+  $ \text{sharpened cosine similarity}_{A} = 0.994^3 \approx 0.982 $
 ```
+
 - 对B:
+
 ```math
-$ \text{sharpened cosine similarity}_{B} = 0.535^3 \approx 0.153 $
+  $ \text{sharpened cosine similarity}_{B} = 0.535^3 \approx 0.153 $
 ```
+
 **分析结果**
 
 在上述示例中，向量对A的余弦相似度很高（接近1），通过锐化处理，它的相似度值虽未被进一步增强，但减少相对有限。对于向量对B，锐化处理显著降低了它的相似度值，向量对A与向量对B的差值显著提高了。
