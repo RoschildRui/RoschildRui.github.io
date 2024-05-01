@@ -248,15 +248,14 @@ np.save('test_emb_sentence-t5.npy', test_emb)
 
 ### 训练deberta模型
 **[Reference](https://www.kaggle.com/code/alejopaullier/llm-pr-seq2seq-train/notebook)**
-我们主要基于这个笔记本进行了一些修改
-
+我们主要基于这个笔记本进行了一些提升修改
 #### 模型参数设置
 ```python
 class config:
     AMP = True
     BATCH_SIZE_TRAIN = 4
     BATCH_SIZE_VALID = 4
-    BETAS = (0.85, 0.999)
+    BETAS = (0.9, 0.999)
     DEBUG = 0 
     DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     LR = 5e-6
@@ -383,6 +382,14 @@ class CustomModel(nn.Module):
 
         return output, prompt_embedding
 ```
+
+#### 模型训练
+上述deberta模型的训练在Autodl的4090上**一个epoch**大约在**6个小时左右**
+
+我们发现当`batch_size=2`是不打开GRADIENT_CHECKPOINTING是比 `batch_size=16`打开GRADIENT_CHECKPOINTING快，且**测试集评估效果没有显著的影响**
+
+![image](https://github.com/RoschildRui/RoschildRui.github.io/assets/146306438/c10000e5-7c73-4b27-8d28-fdabf457d8c7)
+
 
 
 
