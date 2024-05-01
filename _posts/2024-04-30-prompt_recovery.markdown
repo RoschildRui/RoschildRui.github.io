@@ -80,9 +80,8 @@ $\vec{y}$ = [3, 2, 1]
 **计算余弦相似度**
 
 余弦相似度公式为：
-```math
+
 $\text{cosine similarity}$ = $\frac{\vec{a} \cdot \vec{b}}{\|\vec{a}\| \|\vec{b}\|}$
-```
 
 其中 $\vec{a} \cdot \vec{b} $是向量的点积，$\|\vec{a}\|$ 和 $\|\vec{b}\|$ 是向量的模。
  
@@ -105,21 +104,17 @@ $\text{cosine similarity}$ = $\frac{\vec{a} \cdot \vec{b}}{\|\vec{a}\| \|\vec{b}
   $ \text{cosine similarity}_{B} = \frac{10}{14} \approx 0.535 $
 ```
 
-**应用锐化处理（$`p = 3`$）**
+**应用锐化处理（`p = 3`）**
 
 锐化余弦相似度为 $`\text{cosine similarity}^p`$，这里取 `p = 3`：
 
 - 对A:
 
-```math
   $ \text{sharpened cosine similarity}_{A} = 0.994^3 \approx 0.982 $
-```
 
 - 对B:
 
-```math
   $ \text{sharpened cosine similarity}_{B} = 0.535^3 \approx 0.153 $
-```
 
 **分析结果**
 
