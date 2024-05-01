@@ -50,6 +50,8 @@ id,rewrite_prompt
 
 
 ### 方案预览
+![image](https://github.com/RoschildRui/RoschildRui.github.io/assets/146306438/d43d75a0-7093-4d06-904d-cbd9b3db61a2)
+
 - 1.构建基于deberta-v3-large的seq2seq模型
 - 2.构建合适的adapter层微调[phi2](https://www.kaggle.com/models/Microsoft/phi/Transformers/2/1)模型
 - 3.few-shot [mistral-7b-v2](https://www.kaggle.com/datasets/ahmadsaladin/mistral-7b-it-v02)模型
@@ -979,7 +981,7 @@ sub.to_csv('submission.csv', index=False)
 ```
 
 ### 总结
-在反思为什么集成三个模型的预测结果会效果好的时候，我从私有数据集中的数据提炼30条数据，分别使用3个模型（这三个模型的`PB`分数十分接近，`deberta`的`PB=0.64`，`mistral`的`PB=0.65`,`mistral`的`PB=0.65`)进行预测，他们的预测结果都存在一些很明显的差异，也就是说他们生成的句子的某些特征是正交的，于是我想可能是由于这些特征在经过`sentence-t5`的encode后拉近了与目标提示词的距离，进而提高了`PB`分数。
+在反思为什么集成三个模型的预测结果会效果好的时候，我从私有数据集中的数据提炼30条数据，分别使用3个模型（这三个模型的`PB`分数十分接近，`deberta`的`PB=0.64`，`phi`的`PB=0.65`,`mistral`的`PB=0.65`)进行预测，他们的预测结果都存在一些很明显的差异，也就是说他们生成的句子的某些特征是正交的，于是我想可能是由于这些特征在经过`sentence-t5`的encode后拉近了与目标提示词的距离，进而提高了`PB`分数。
 
 在比赛结束后我从第一的方案分享中看到了这样一幅图
 ![image](https://github.com/RoschildRui/RoschildRui.github.io/assets/146306438/e4d2d756-cf67-4fd8-8b97-faafaba2d251)
