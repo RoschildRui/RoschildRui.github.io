@@ -625,7 +625,7 @@ tokenizer.save_pretrained(model_save_path)
 所以最后我们直接使用开源的adapter进行微调phi
 
 我们对开源代码上进行了一些调整以针对我们最后的集成方案进行优化
-- 根据对生成文本的观察，添加符号'.',';',':','<endoftext>' （抱歉，渲染出来的格式好像有点问题😳） 作为生成文本的停止标记，**严格控制生成文本的时间**
+- 根据对生成文本的观察，添加符号'.',';',':','<endoftext>' （抱歉，渲染出来的格式好像有点问题😳） 作为生成文本的停止标记，进而严格控制phi2生成文本的时间
 - 去除生成文本最后的符号，我们发现在集成预测结果的时候要严格控制句号的数目，去掉句号能在PB提高0.01分左右 🤠
 
 参考代码如下：
@@ -671,7 +671,8 @@ def text_generate(ori_text, rew_text,model, tokenizer, stop_tokens=['.',';',':',
 
 rewrite_prompts = []
 for i, row in tqdm(test_df.iterrows(), total=len(test_df)):
-    prompt = mean_prompt = 'Please improve the following text using the writing style of, maintaining the original meaning but altering the tone.'
+    prompt = mean_prompt = 'Please improve this text.'
+    # 因为集成的原因所以这里不使用'Please improve this text using the writing style with maintaining the original meaning but altering the tone.'单模使用这个
     try:
         prompt = text_generate(row['original_text'],
                                row['rewritten_text'],
@@ -697,8 +698,16 @@ sub_df.to_csv('submission_2.csv', index=False)
 ### few-shot mistral-7b模型
 这个应该是比赛中最火爆的方案，无论开源还是闭源
 
-同样，这里感谢一下大佬开源的[方案](https://www.kaggle.com/code/richolson/mistral-7b-prompt-recovery-version-2)
+同样，这里感谢一下开源的[方案](https://www.kaggle.com/code/richolson/mistral-7b-prompt-recovery-version-2)
 
+####few-shot限制条件
+- 1. 需要模型具有较高的基准能力，这场比赛中few-shot llama2-13b与few-show mistral-7b 在PB的差距约为0.02，在PV的差距在0.013以内
+![image](https://github.com/RoschildRui/RoschildRui.github.io/assets/146306438/ec1cf9ea-ab7d-4bcb-b8a4-79da3c8fdc4d)
+上面的图是mistral官方提供的benchmarks对比图，我们认为这个任务主要需要大模型的核心能力为**Reasoning**、**Knowledge**、**Comprehension**
+- 2. 
+
+我们基于开源的方案做了2点改进：
+- 1.将`response_prefix = "Improve this text by"`
 参考代码如下：
 ```python
 import torch
@@ -815,11 +824,6 @@ examples_sequences = [
         "In the quiet before dawn, a small group of innovators gathered, their mission: to simplify home maintenance through technology. But their true journey began with the unexpected addition of Max, a talking car with a knack for solving problems. 'Let me guide you through this maze of decisions,' Max offered, his dashboard flickering to life.",
         "Please improve this text using the writing style by adding a talking car."
     ),
-    
-        
-
-    
-    
 ]
 
 def remove_numbered_list(text):
@@ -835,7 +839,6 @@ def remove_numbered_list(text):
             final_text_paragraphs.append(line)
 
     return '  '.join(final_text_paragraphs)
-
 
 #trims LLM output to just the response
 def trim_to_response(text):
@@ -953,7 +956,7 @@ for index, row in test_df.iterrows():
     test_df.at[index, 'rewrite_prompt'] = result
     
 test_df = test_df[['id', 'rewrite_prompt']]
-test_df.to_csv('pred3.csv', index=False)
+test_df.to_csv('submission_3.csv', index=False)
 ```
 
 
