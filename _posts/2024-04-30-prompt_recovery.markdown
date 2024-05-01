@@ -65,12 +65,15 @@ id,rewrite_prompt
 假设我们有两对向量，一对较为相似，另一对较为不相似：
 
 - 向量对A（较为相似）:
+```markdown
   - $\vec{u} = [1, 2, 3]$
   - $\vec{v} = [1, 2, 2.9]$
-
+```
 - 向量对B（较为不相似）:
+```markdown
   - $\vec{x} = [1, 2, 3]$
   - $\vec{y} = [3, 2, 1]$
+```
 
 **计算余弦相似度**
 
@@ -106,9 +109,9 @@ $$
 \text{cosine similarity}_{B} = \frac{10}{14} \approx 0.535
 ```
 
-**应用锐化处理（$`p = 3`$）**
+**应用锐化处理（`p = 3`）**
 
-锐化余弦相似度为 $`\text{cosine similarity}^p`$，这里取 $`p = 3`$：
+锐化余弦相似度为 $`\text{cosine similarity}^p`$，这里取 `p = 3`：
 
 - 对A:
 
