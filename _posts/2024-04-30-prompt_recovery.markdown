@@ -493,7 +493,7 @@ submission.to_csv("pred1.csv", index=False)
 好了终于把第一个模型写完了
 ![image](https://github.com/RoschildRui/RoschildRui.github.io/assets/146306438/509cd940-f1b4-4e54-a19b-5a010aa0a38e)
 
-###
+### 微调[phi](https://www.kaggle.com/models/Microsoft/phi/Transformers/2/1)模型
 
 
 
