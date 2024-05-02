@@ -127,7 +127,7 @@ $\text{cosine similarity}$ = $\frac{\vec{a} \cdot \vec{b}}{\|\vec{a}\| \|\vec{b}
 
 在上述示例中，向量对A的余弦相似度很高（接近1），通过锐化处理，它的相似度值虽未被进一步增强，但减少相对有限。对于向量对B，锐化处理显著降低了它的相似度值，向量对A与向量对B的差值显著提高了。
 
-通过锐化余弦相似度，我们可以明显地区分高度相似、一般相似、和迥异的情况，锐化余弦相似度通过**强化已有的相似度或差异**，**使得模型预测值更加“尖锐”**。
+通过锐化余弦相似度，我们可以明显地区分高度相似、一般相似、和迥异的情况，锐化余弦相似度通过**强化已有的相似度的差异**，**使得模型预测值更加“尖锐”**。
 
 这说明这场比赛会以较高的精度区分非常相近、一般相近、或者迥异的实体文本。进而对于我们的嵌入向量预测的准确性提出了很高的要求。**（也为我们后面集成多个模型进行预测输出埋下了伏笔）** 😎
 
@@ -149,7 +149,7 @@ $\text{cosine similarity}$ = $\frac{\vec{a} \cdot \vec{b}}{\|\vec{a}\| \|\vec{b}
 - ...
 
 #### 数据预处理
-我们发现数据集中存在一些无效信息，以及一些有效信息存在噪声，于是我们主要参考一位kaggle的expert预处理方案对数据集进行了**正则去噪**（抱歉，找不到那个方案的说明去哪里了，所以就让Claude写一下吧😋）
+我们发现数据集中存在一些无效信息，以及一些有效信息存在噪声，于是我们主要参考一位kaggle expert预处理方案对数据集进行了**正则去噪**（抱歉，找不到那个方案的说明去哪里了，所以就让Claude写一下吧😋）
 
 去噪内容如下：
 1. 去除无用或不相关的文本:
@@ -217,7 +217,7 @@ def fix_prompt(text):
 #### embedding数据
 将上述步骤处理好的数据，通过**sentence-t5-base**模型，生成训练集和测试集的embedding
 
-同时将上述数据中的unique prompt提示词整理为一个prompt文件，利用Meta开源的Faiss库将其转为prompt.index，对deberta模型预测结果进行相似度匹配进而输出**（关于为什么用这种方法这里只讲一点剩下的后面会详细讲解---这种方法涨点显著但是要求私有数据集构建完善，我们通过使用提示词工程调用gpt-4生成了150条高质量平均提示词（`PB=0.58`以上，同时在开源的数据集中找到了1400000余条富有特征的提示词,没错就是140w条你没看错😀）**
+同时将上述数据中的unique prompt提示词整理为一个prompt文件，利用Meta开源的Faiss库将其转为prompt.index，对deberta模型预测结果进行相似度匹配进而输出**（关于为什么用这种方法这里只讲一点剩下的后面会详细讲解-----这种方法涨点显著但是要求私有数据集构建完善，我们通过使用提示词工程调用gpt-4生成了150条高质量平均提示词（`PB=0.58`以上，同时在开源的数据集中找到了1400000余条富有特征的提示词,没错就是140w条你没看错😀）**
 
 **参考代码如下：**
 ````python
@@ -420,9 +420,11 @@ class CustomModel(nn.Module):
 
 ![image](https://github.com/RoschildRui/RoschildRui.github.io/assets/146306438/c10000e5-7c73-4b27-8d28-fdabf457d8c7)
 
-我们发现当`batch_size=2`、不打开GRADIENT_CHECKPOINTING是比 `batch_size=16`并打开GRADIENT_CHECKPOINTING快，并且**测试集评估效果没有显著的影响**（有些时候提成了），于是我们选择不打开checkpoint
+我们发现当`batch_size=2`、不打开GRADIENT_CHECKPOINTING是比 `batch_size=16`并打开GRADIENT_CHECKPOINTING快，并且**测试集评估效果没有显著的影响**（有些时候提升了），于是我们选择不打开checkpoint
 
 #### 模型推理
+将模型预测结果与之前embedding的index进行匹配，选择**相似度最高**的作为预测结果进行填充
+
 参考代码如下：
 ```python
 def inference_fn(model_weight, config, test_df, tokenizer, device, model_config):
@@ -501,7 +503,7 @@ submission.to_csv("submission_1.csv", index=False)
 ### 微调[phi](https://www.kaggle.com/models/Microsoft/phi/Transformers/2/1)
 思路来源于这位大佬开源的[Notebook1](https://www.kaggle.com/code/mozhiwenmzw/0-61-llmpr-phi2-sft-model-generate-infer/notebook)和[Notebook2](https://www.kaggle.com/code/mozhiwenmzw/0-61-llmpr-phi2-sft-model-training/notebook)
 
-同时感谢这位大佬开源的[Mean prompt](https://www.kaggle.com/code/seifachour12/lb-score-0-63)
+同时感谢这位大佬开源的[Mean Prompt](https://www.kaggle.com/code/seifachour12/lb-score-0-63)
 
 #### 训练adapter
 在看完大佬的笔记本后，我们先尝试通过我们自己的私有数据集训练phi的adapter层进而使得它对于这个任务更加适用
@@ -994,9 +996,9 @@ sub.to_csv('submission.csv', index=False)
 
 **kaggle**提供了一个平台使得全球热爱数据科学，机器学习的朋友能够在此相遇，这里**不论新老**，**不论强弱**，**自由交流**，让所有kaggler能够将所学知识灵活应用于前沿应用场景，也能在不断的交流中加深对所学知识的理解，学到更多新的东西。
 
-再次感谢**kaggle**！！！😉
+再次感谢**kaggle**以及**kaggle上热情交流的朋友们**！！！😉
 
-最后感谢我的父母，学校为我提供了优越的学习研究条件，感谢吴哥zzy带我走上kaggle之路
+最后，感谢我的父母、学校为我提供了优越的学习研究条件，感谢吴哥zzy带我走上kaggle之路
 
 
 
