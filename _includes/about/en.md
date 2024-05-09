@@ -12,4 +12,6 @@ I am Roschild Rui, a student majoring in Data Science at South China University 
 - **2023 Asia-Pacific Cup**: National Second Prize
 - **2024 Huashu Cup International Mathematical Modeling Contest**: Meritorious Winner
 - **2024 College Big Data Challenge**: Second Prize
+- **2024 Mathematical Contest In Modeling**: Honorable Mention
+
 
