@@ -11,8 +11,8 @@
 - **（2024.4）Kaggle [LLM Prompt Recovery](https://www.kaggle.com/competitions/llm-prompt-recovery) (RANK 25/2175)**：前三十银牌 （**LLM,NLP**）
 - **（2024.5）Kaggle [Home Credit - Credit Risk Model Stability](https://www.kaggle.com/competitions/home-credit-credit-risk-model-stability) (RANK 350/2175)**：铜牌（**数据挖掘**）
 - **（2024.5）成为[Kaggle Expert](https://www.kaggle.com/roschildrui) (RANK 2287/205111)**
-- **（2024.6）Kaggle [AI Mathematical Olympiad - Progress Prize 1](https://www.kaggle.com/competitions/ai-mathematical-olympiad-prize) (RANK 58/1161)**：银牌（**LLM,COT**）
-- **（2024.6）Kaggle [learning-agency-lab-automated-essay-scoring-2](https://www.kaggle.com/competitions/learning-agency-lab-automated-essay-scoring-2) (RANK 1334/2706)** （**NLP,文本数据挖掘**）
+- **（2024.6）Kaggle [AI Mathematical Olympiad - Progress Prize 1](https://www.kaggle.com/competitions/ai-mathematical-olympiad-prize) (RANK 58/1161)**：银牌（**LLM, COT**）
+- **（2024.6）Kaggle [learning-agency-lab-automated-essay-scoring-2](https://www.kaggle.com/competitions/learning-agency-lab-automated-essay-scoring-2) (RANK 1334/2706)** （**NLP, 文本数据挖掘**）
 - **（2024.6）[Kaggle Expert](https://www.kaggle.com/roschildrui) (RANK 1343/205640)**
 - **（2024.1）2023亚太杯**：二等奖（**数据挖掘**）
 - **（2024.1）2024华数杯国际数学建模大赛**：M奖（**数据挖掘**）
