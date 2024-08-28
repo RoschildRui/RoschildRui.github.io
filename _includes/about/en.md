@@ -14,6 +14,8 @@ I am Roschild Rui, a student majoring in Data Science at South China University 
 - **(June 2024)Kaggle [AI Mathematical Olympiad - Progress Prize 1](https://www.kaggle.com/competitions/ai-mathematical-olympiad-prize) (RANK 58/1161)**：Silver medal（**LLM, COT**）
 - **(June 2024)Kaggle [learning-agency-lab-automated-essay-scoring-2](https://www.kaggle.com/competitions/learning-agency-lab-automated-essay-scoring-2) (RANK 1334/2706)** （**NLP, Article Data Mining**）
 - **(June 2024)[Kaggle Expert](https://www.kaggle.com/roschildrui) (RANK 1343/205640)**
+- **（2024.8）Kaggle [lmsys-chatbot-arena](https://www.kaggle.com/competitions/lmsys-chatbot-arena) (RANK 19/1849)**：Silver medal（**LLM, NLP**）
+- **（2024.8）[Kaggle Expert](https://www.kaggle.com/roschildrui) (RANK 896/205366)**
 - **(January 2024) 2023 Asia-Pacific Cup**: Second Prize (**Data Mining**)
 - **(January 2024) 2024 Huashu Cup International Mathematical Modeling Contest**: Meritorious Winner (**Data Mining**)
 - **(March 2024) 2024 University Big Data Challenge**: Second Prize (**Data Mining**)
