@@ -14,6 +14,8 @@
 - **（2024.6）Kaggle [AI Mathematical Olympiad - Progress Prize 1](https://www.kaggle.com/competitions/ai-mathematical-olympiad-prize) (RANK 58/1161)**：银牌（**LLM, COT**）
 - **（2024.6）Kaggle [learning-agency-lab-automated-essay-scoring-2](https://www.kaggle.com/competitions/learning-agency-lab-automated-essay-scoring-2) (RANK 1334/2706)** （**NLP, 文本数据挖掘**）
 - **（2024.6）[Kaggle Expert](https://www.kaggle.com/roschildrui) (RANK 1343/205640)**
+- **（2024.8）Kaggle [lmsys-chatbot-arena](https://www.kaggle.com/competitions/lmsys-chatbot-arena) (RANK 19/1849)**：银牌（**LLM, NLP**）
+- **（2024.8）[Kaggle Expert](https://www.kaggle.com/roschildrui) (RANK 896/205366)**
 - **（2024.1）2023亚太杯**：二等奖（**数据挖掘**）
 - **（2024.1）2024华数杯国际数学建模大赛**：M奖（**数据挖掘**）
 - **（2024.3）2024高校大数据挑战赛**：二等奖（**数据挖掘**）
