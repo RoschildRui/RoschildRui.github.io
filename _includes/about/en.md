@@ -1,5 +1,6 @@
 I am Roschild Rui, a student majoring in Data Science at South China University of Technology (Class of 2023.9).
-- **Grade 90.99/100 GPA 3.8/4.0**
+- **Grade 90.99/100**
+- **GPA 3.8/4.0**
 
 ### Areas of Interest
 - Pre-training, fine-tuning, and inference of large language models
