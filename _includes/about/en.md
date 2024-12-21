@@ -21,6 +21,9 @@ I am Roschild Rui, a student majoring in Data Science at South China University 
 - **(June 2024)[Kaggle Expert](https://www.kaggle.com/roschildrui) (RANK 1343/205640)**
 - **(Augest 2024)Kaggle [lmsys-chatbot-arena](https://www.kaggle.com/competitions/lmsys-chatbot-arena) (RANK 19/1849)**：Silver medal（**LLM, NLP**）
 - **(Augest 2024)[Kaggle Expert](https://www.kaggle.com/roschildrui) (RANK 896/205366)**
+- **(October 2024)Kaggle [RSNA 2024 Lumbar Spine Degenerative Classification](https://www.kaggle.com/competitions/rsna-2024-lumbar-spine-degenerative-classification) (RANK 231/1874)**：（**Medical Image Object Detection, Object Classification**）
+- **(December 2024)Kaggle [eedi-mining-misconceptions-in-mathematics](https://www.kaggle.com/competitions/eedi-mining-misconceptions-in-mathematics) (RANK 19/1446)**：Silver medal（**Recall, Rerank, LLM**）
+- **(December 2024)[Kaggle Expert](https://www.kaggle.com/roschildrui) (RANK 644/203040)**
 
 #### others
 - **(January 2024) 2023 Asia-Pacific Cup**: Second Prize (**Data Mining**)
