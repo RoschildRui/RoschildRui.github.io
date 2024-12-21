@@ -22,6 +22,10 @@
 - **（2024.6）[Kaggle Expert](https://www.kaggle.com/roschildrui) (RANK 1343/205640)**
 - **（2024.8）Kaggle [lmsys-chatbot-arena](https://www.kaggle.com/competitions/lmsys-chatbot-arena) (RANK 19/1849)**：银牌（**LLM, NLP**）
 - **（2024.8）[Kaggle Expert](https://www.kaggle.com/roschildrui) (RANK 896/205366)**
+- **（2024.10）Kaggle [RSNA 2024 Lumbar Spine Degenerative Classification](https://www.kaggle.com/competitions/rsna-2024-lumbar-spine-degenerative-classification) (RANK 231/1874)**：（**医学影像目标检测，目标分类**）
+- **（2024.12）Kaggle [eedi-mining-misconceptions-in-mathematics](https://www.kaggle.com/competitions/eedi-mining-misconceptions-in-mathematics) (RANK 19/1446)**：银牌（**Recall, Rerank, LLM**）
+- **（2024.12）[Kaggle Expert](https://www.kaggle.com/roschildrui) (RANK 644/203040)**
+
 
 #### 其他
 - **（2024.1）2023亚太杯**：二等奖（**数据挖掘**）
