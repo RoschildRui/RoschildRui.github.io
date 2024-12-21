@@ -4,7 +4,7 @@ I am Roschild Rui, a student majoring in Data Science at South China University 
 
 ### Areas of Interest
 - Pre-training, fine-tuning, and inference of large language models
-- Research on NLP algorithms
+- NLP algorithms
 - Low-market-cap quantitative trading strategies
 - Kaggle competitions
 
