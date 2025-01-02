@@ -1,7 +1,7 @@
 我是Roschild Rui，一名华南理工大学数据科学与大数据专业大二本科生（2024.9）
 - **Grade 90.99/100**
 - **GPA 3.8/4.0**
-- **2023-2024学年综合素质评价 专业第一**
+- **2023-2024学年综合素质评价 专业第一 校级一等奖学金**
 
 ### 兴趣方向
 - 大语言模型的预训练、微调、推理
@@ -22,7 +22,8 @@
 - **（2024.6）[Kaggle Expert](https://www.kaggle.com/roschildrui) (RANK 1343/205640)**
 - **（2024.8）Kaggle [lmsys-chatbot-arena](https://www.kaggle.com/competitions/lmsys-chatbot-arena) (RANK 19/1849)**：银牌（**LLM, NLP**）
 - **（2024.8）[Kaggle Expert](https://www.kaggle.com/roschildrui) (RANK 896/205366)**
-- **（2024.10）Kaggle [RSNA 2024 Lumbar Spine Degenerative Classification](https://www.kaggle.com/competitions/rsna-2024-lumbar-spine-degenerative-classification) (RANK 231/1874)**：（**医学影像目标检测，目标分类**）
+- **（2024.10）Kaggle [RSNA 2024 Lumbar Spine Degenerative Classification](https://www.kaggle.com/competitions/rsna-2024-lumbar-spine-degenerative-classification)
+  (RANK 231/1874)**：（**医学影像目标检测，目标分类**）
 - **（2024.12）Kaggle [eedi-mining-misconceptions-in-mathematics](https://www.kaggle.com/competitions/eedi-mining-misconceptions-in-mathematics) (RANK 19/1446)**：银牌（**Recall, Rerank, LLM**）
 - **（2024.12）[Kaggle Expert](https://www.kaggle.com/roschildrui) (RANK 644/203040)**
 
