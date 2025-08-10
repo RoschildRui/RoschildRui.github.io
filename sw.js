@@ -1,3 +1,5 @@
+---
+---
 /* ===========================================================
  * sw.js
  * ===========================================================
@@ -9,7 +11,8 @@
 // CACHE_NAMESPACE
 // CacheStorage is shared between all sites under same domain.
 // A namespace can prevent potential name conflicts and mis-deletion.
-const CACHE_NAMESPACE = 'main-'
+// Use build timestamp to invalidate old caches after each deployment
+const CACHE_NAMESPACE = 'main-{{ site.time | date: "%Y%m%d%H%M%S" }}-'
 
 const CACHE = CACHE_NAMESPACE + 'precache-then-runtime';
 const PRECACHE_LIST = [
