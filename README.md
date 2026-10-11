@@ -1,63 +1,100 @@
-[Hux Blog](https://huangxuan.me)
-================================
+# RoschildRui.github.io
 
-> I never expected this to become popular.
+基于 [Jekyll](https://github.com/jekyll/jekyll) 的极简个人主页，推送到 `master` 后由 GitHub Actions 自动构建发布。
 
-![](http://huangxuan.me/img/blog-desktop.jpg)
+首页只有三块：**关于**、**文章**、**想法**。
 
+## 目录
 
-[User Manual 👉](_doc/Manual.md)
---------------------------------------------------
-
-### Getting Started
-
-1. You will need [Ruby](https://www.ruby-lang.org/en/) and [Bundler](https://bundler.io/) to use [Jekyll](https://jekyllrb.com/). Following [Using Jekyll with Bundler](https://jekyllrb.com/tutorials/using-jekyll-with-bundler/) to fullfill the enviromental requirement.
-
-2. Installed dependencies in the `Gemfile`:
-
-```sh
-$ bundle install 
+```
+_includes/intro.md     首页的自我介绍（中文）
+_includes/intro_en.md  首页的自我介绍（英文）
+about.md / about_en.md 完整介绍（中 / 英）
+_posts/                文章（Markdown 或 HTML，英文版为同名 + _en）
+_thoughts/             想法（每条一个文件）
+_plugins/              把 xxx_en.md 和 xxx.md 配成一对的小插件
+img/                   图片
+assets/css/style.css   全部样式
 ```
 
-3. Serve the website (`localhost:4000` by default):
+## 写文章
 
-```sh
-$ bundle exec jekyll serve  # alternatively, npm start
+文件放进 `_posts/`，文件名格式为 `YYYY-MM-DD-标题.md`，日期决定排序和链接（`/YYYY/MM/DD/标题/`）。
+
+**Markdown 文章**：
+
+```markdown
+---
+title: 文章标题
+subtitle: 可选的副标题
+math: true          # 可选，需要渲染 $公式$ 时打开
+---
+
+正文……
 ```
 
-### Development (Build From Source)
+**HTML 片段**（只有正文，套用站点样式）：同上，把扩展名换成 `.html`，正文写 HTML 即可。
 
-To modify the theme, you will need [Grunt](https://gruntjs.com/). There are numbers of tasks you can find in the `Gruntfile.js`, includes minifing JavaScript, compiling `.less` to `.css`, adding banners to keep the Apache 2.0 license intact, watching for changes, etc. 
+**完整的 HTML 页面**（自带 `<html>`、样式、脚本，例如导出的 notebook 或可视化页面）：在文件最前面加上这段 front matter，页面会原样发布：
 
-Yes, they were inherited and are extremely old-fashioned. There is no modularization and transpilation, etc.
+```yaml
+---
+title: 文章标题
+layout: none
+render_with_liquid: false
+---
+<!DOCTYPE html>
+...
+```
 
-Critical Jekyll-related code are located in `_include/` and `_layouts/`. Most of them are [Liquid](https://github.com/Shopify/liquid/wiki) templates.
+文章里的图片放到 `img/` 下，用 `![说明](/img/xxx.png)` 引用。
 
-This theme uses the default code syntax highlighter of jekyll, [Rouge](http://rouge.jneen.net/), which is compatible with Pygments theme so just pick any pygments theme css (e.g. from [here](http://jwarby.github.io/jekyll-pygments-themes/languages/javascript.html) and replace the content of `highlight.less`.
+## 中英双语
 
+网站默认显示英文，右上角的语言按钮会在同一页面内切换中英文。英文版放在中文文件**同一目录**下，文件名加 `_en` 后缀，例如：
 
-### Interesting to know more? Checkout the [full user manual](_doc/Manual.md)!
+```
+_posts/2026-05-13-ai-agent-long-horizon-roadmap.md      中文
+_posts/2026-05-13-ai-agent-long-horizon-roadmap_en.md   英文
+about.md                                                中文
+about_en.md                                             英文
+```
 
+`_en` 文件不会单独发布成一个页面，只作为对应中文页面的英文版显示。
 
-Other Resources
----------------
+英文文件只需要 `title`（文章可选 `subtitle`）：
 
-Ports
-- [**Hexo**](https://github.com/Kaijun/hexo-theme-huxblog) by @kaijun
-- [**React-SSR**](https://github.com/LucasIcarus/huxpro.github.io/tree/ssr) by @LucasIcarus
+```markdown
+---
+title: English Title
+---
 
-[Starter/Boilerplate](https://github.com/huxpro/huxblog-boilerplate)
-- Out of date. Helps wanted for updating it on par with the main repo
+English content...
+```
 
-Translation
-- [🇨🇳  中文文档（有点过时）](https://github.com/Huxpro/huxpro.github.io/blob/master/_doc/README.zh.md)
+没有英文版的内容在英文模式下会继续显示中文。（完整 HTML 页面原样发布，不参与切换。）
 
+## 记录想法
 
-License
--------
+在 `_thoughts/` 下新建一个文件，例如 `_thoughts/2026-10-12-something.md`：
 
-Apache License 2.0.
-Copyright (c) 2015-present Huxpro
+```markdown
+---
+date: 2026-10-12 23:00:00 +0800
+en: English version, optional. Markdown works here too.
+---
+想到什么写什么，支持 Markdown。
+```
 
-Hux Blog is derived from [Clean Blog Jekyll Theme (MIT License)](https://github.com/BlackrockDigital/startbootstrap-clean-blog-jekyll/)
-Copyright (c) 2013-2016 Blackrock Digital LLC.
+首页显示最新的 5 条，其余在 `/thoughts/` 页面。
+
+## 本地预览
+
+需要 Ruby 3.x：
+
+```sh
+bundle install
+bundle exec jekyll serve
+```
+
+然后打开 <http://localhost:4000>。

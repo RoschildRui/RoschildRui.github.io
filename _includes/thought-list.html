@@ -1,0 +1,15 @@
+<ul class="thought-list">
+  {% for thought in include.thoughts limit: include.limit %}
+  <li>
+    {% if thought.en %}
+    <div class="prose zh">{{ thought.content }}</div>
+    <div class="prose en">{{ thought.en | markdownify }}</div>
+    {% else %}
+    <div class="prose">{{ thought.content }}</div>
+    {% endif %}
+    <time datetime="{{ thought.date | date_to_xmlschema }}">{{ thought.date | date: "%Y-%m-%d" }}</time>
+  </li>
+  {% else %}
+  <li class="empty"><span class="zh">还没有想法。</span><span class="en">Nothing here yet.</span></li>
+  {% endfor %}
+</ul>
