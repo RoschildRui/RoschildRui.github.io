@@ -4,7 +4,8 @@
 #
 # Standalone HTML pages (`layout: none`) can't switch language in place, so their
 # English version is published at `<url>en/`, and both versions get a small
-# language bar injected after rendering.
+# language bar injected after rendering. Every standalone page also gets the
+# site favicon unless it declares its own.
 Jekyll::Hooks.register :site, :post_read do |site|
   items = site.pages + site.posts.docs
   by_path = items.to_h { |item| [item.relative_path.sub(/\.[^.\/]+\z/, ""), item] }
@@ -48,12 +49,25 @@ module EnVersions
     [head, body]
   end
 
-  def self.inject(doc)
-    return unless doc.data["layout"] == "none" && (doc.data["en_url"] || doc.data["zh_url"])
+  def self.icons(site)
+    base = site.baseurl
+    <<~HTML
+      <link rel="icon" href="#{base}/img/favicon.ico" sizes="any">
+      <link rel="icon" type="image/png" href="#{base}/img/favicon-32.png">
+      <link rel="apple-touch-icon" href="#{base}/img/apple-touch-icon.png">
+    HTML
+  end
 
-    head, body = bar(doc.site, doc)
-    doc.output = doc.output.sub(/<head[^>]*>/i) { |tag| "#{tag}\n#{head}" }
-    doc.output = doc.output.sub(%r{</body>}i) { "#{body}</body>" }
+  def self.inject(doc)
+    return unless doc.data["layout"] == "none" && doc.output_ext == ".html"
+
+    head = doc.output.match?(/<link[^>]+rel=["'][^"']*icon/i) ? "" : icons(doc.site)
+    if doc.data["en_url"] || doc.data["zh_url"]
+      script, body = bar(doc.site, doc)
+      head = script + head
+      doc.output = doc.output.sub(%r{</body>}i) { "#{body}</body>" }
+    end
+    doc.output = doc.output.sub(/<head[^>]*>/i) { |tag| "#{tag}\n#{head}" } unless head.empty?
   end
 end
 
