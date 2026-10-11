@@ -1,0 +1,2399 @@
+---
+title: 量化选股研究 × DeepSeek-V4 / V4.1：截面选股经验与新一代基础模型架构的双向迁移
+description: 一个长期运行的截面选股研究项目与 DeepSeek-V4 / V4.1 两份技术报告的新架构遵循同一批设计原理：关联、可迁移的 trick、对 loop transformer 的启发，以及反过来对选股研究的提升方向。
+layout: none
+render_with_liquid: false
+feed:
+  excerpt_only: true
+---
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>量化选股研究 × DeepSeek-V4 / V4.1：截面选股经验与新一代基础模型架构的双向迁移</title>
+<style>
+:root{
+  --bg:#fbfaf6; --fg:#1f2328; --muted:#5b6470; --line:#e4e0d6; --card:#ffffff;
+  --accent:#9a3412; --accent2:#1e3a8a; --A:#15803d; --B:#1d4ed8; --C:#6b7280;
+  --warn-bg:#fff7ed; --warn:#b45309; --ok-bg:#f0fdf4; --info-bg:#eff6ff;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font:15.5px/1.78 "PingFang SC","Noto Sans CJK SC","Source Han Sans SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sans-serif;}
+a{color:var(--accent2);text-decoration:none} a:hover{text-decoration:underline}
+.layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:44px;max-width:1380px;margin:0 auto;padding:0 28px}
+nav.toc{position:sticky;top:0;align-self:start;height:100vh;overflow:auto;padding:30px 0 30px;font-size:13.5px;line-height:1.6}
+nav.toc .t{font-weight:700;color:var(--accent);margin-bottom:10px;letter-spacing:.02em}
+nav.toc ol{list-style:none;margin:0;padding:0}
+nav.toc li{margin:4px 0}
+nav.toc li.sub{padding-left:14px;font-size:12.8px}
+nav.toc a{color:#374151}
+main{padding:34px 0 90px;min-width:0}
+header.hero{border-bottom:3px solid var(--fg);padding-bottom:18px;margin-bottom:8px}
+header.hero h1{font-size:31px;line-height:1.32;margin:0 0 10px;letter-spacing:.01em}
+header.hero .sub{color:var(--muted);font-size:14px}
+h2{font-size:24px;line-height:1.35;border-top:2px solid var(--fg);padding-top:16px;margin:64px 0 14px}
+h3{font-size:18.5px;margin:34px 0 10px;color:#111827}
+h4{font-size:16px;margin:22px 0 6px}
+p{margin:10px 0}
+.lead{font-size:16.5px}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0 18px;background:var(--card)}
+th,td{border-bottom:1px solid var(--line);padding:8px 10px;vertical-align:top;text-align:left}
+th{background:#f2efe8;font-weight:650;white-space:nowrap}
+tr:hover td{background:#fcfbf7}
+td.num{white-space:nowrap;font-variant-numeric:tabular-nums}
+.badge{display:inline-block;min-width:22px;text-align:center;padding:0 7px;border-radius:10px;font-size:12px;font-weight:700;color:#fff;line-height:20px}
+.bA{background:var(--A)} .bB{background:var(--B)} .bC{background:var(--C)}
+.pill{display:inline-block;padding:0 8px;border-radius:9px;font-size:12px;line-height:20px;border:1px solid var(--line);background:#fff;color:#374151;margin-right:4px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:16px 0}
+.card h4{margin-top:2px}
+.card .meta{font-size:13px;color:var(--muted);margin-bottom:6px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.kpi .v{font-size:25px;font-weight:750;color:var(--accent);line-height:1.25}
+.kpi .k{font-size:12.8px;color:var(--muted)}
+.callout{border-left:4px solid var(--warn);background:var(--warn-bg);padding:12px 16px;border-radius:8px;margin:16px 0}
+.callout.ok{border-color:var(--A);background:var(--ok-bg)}
+.callout.info{border-color:var(--B);background:var(--info-bg)}
+.tldr{background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px 22px 10px;margin:18px 0}
+.tldr ol{padding-left:22px;margin:10px 0}
+.tldr li{margin:9px 0}
+figure{margin:24px 0}
+figure .frame{background:#fffdf8;border:1px solid var(--line);border-radius:12px;padding:10px}
+figcaption{font-size:13px;color:var(--muted);margin-top:8px}
+code{font-family:"JetBrains Mono","SFMono-Regular",Menlo,Consolas,monospace;font-size:12.8px;background:#f1eee6;padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+.formula{font-family:"JetBrains Mono","SFMono-Regular",Menlo,Consolas,monospace;font-size:13.5px;background:#f6f4ee;border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:10px 0;overflow-x:auto;white-space:pre}
+.tag{font-size:12px;color:#fff;background:var(--accent);border-radius:4px;padding:1px 6px;margin-right:6px}
+.tag.q2{background:#7c3aed}.tag.q3{background:#0f766e}.tag.q4{background:#b45309}
+ul.tight li{margin:4px 0}
+.foot{margin-top:70px;border-top:1px solid var(--line);padding-top:14px;color:var(--muted);font-size:13px}
+@media (max-width:1050px){.layout{grid-template-columns:1fr}nav.toc{position:static;height:auto;border-bottom:1px solid var(--line)}.kpis{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}th,td.num{white-space:normal}}
+@media print{nav.toc{display:none}.layout{display:block;max-width:none}h2{break-before:page}figure,.card,table{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="toc">
+  <div class="t">目录</div>
+  <ol>
+    <li><a href="#summary">摘要</a></li>
+    <li><a href="#bg">1. 背景与证据基础</a></li>
+    <li class="sub"><a href="#bg-project">1.1 选股研究走到了哪里</a></li>
+    <li class="sub"><a href="#bg-ds">1.2 两份报告的新架构</a></li>
+    <li class="sub"><a href="#bg-method">1.3 方法与证据等级</a></li>
+    <li><a href="#q1">2. 问题一：关联</a></li>
+    <li class="sub"><a href="#q1-table">2.1 对应关系总表</a></li>
+    <li class="sub"><a href="#q1-principles">2.2 七条共同原理</a></li>
+    <li class="sub"><a href="#q1-limits">2.3 类比在哪里失效</a></li>
+    <li><a href="#q2">3. 问题二：给基础模型的新 trick</a></li>
+    <li class="sub"><a href="#q2-cards">3.1 十条可迁移做法</a></li>
+    <li class="sub"><a href="#q2-rank">3.2 优先级</a></li>
+    <li><a href="#q3">4. 问题三：loop transformer</a></li>
+    <li class="sub"><a href="#q3-chain">4.1 残差链即迭代精修</a></li>
+    <li class="sub"><a href="#q3-ideas">4.2 十条设计启发</a></li>
+    <li class="sub"><a href="#q3-plan">4.3 最小验证方案</a></li>
+    <li><a href="#q4">5. 问题四：给选股研究的提升方向</a></li>
+    <li class="sub"><a href="#q4-diag">5.1 平台期诊断</a></li>
+    <li class="sub"><a href="#q4-road">5.2 路线图</a></li>
+    <li class="sub"><a href="#q4-detail">5.3 前三项的具体方案</a></li>
+    <li class="sub"><a href="#q4-stop">5.4 不建议继续做的事</a></li>
+    <li><a href="#caveats">6. 局限与注意事项</a></li>
+    <li><a href="#appendix">附录</a></li>
+  </ol>
+</nav>
+<main>
+
+<header class="hero">
+  <h1>量化选股研究 × DeepSeek-V4 / V4.1：截面选股经验与新一代基础模型架构的双向迁移</h1>
+  <div class="sub">2026-10 ｜ 对照文献：<a href="https://arxiv.org/abs/2606.19348">DeepSeek-V4 技术报告（arXiv:2606.19348）</a>与 <a href="https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/blob/main/DeepSeek_V41_Tech_Report.pdf">DeepSeek-V4.1-Flash 技术报告</a> ｜ 页码均为 PDF 页码</div>
+</header>
+
+<div class="callout info small"><b>关于本公开版：</b>本文已脱敏，不包含绝对收益或回撤水平、资金规模、市场与基准名称、数据供应商与数据表名称、内部实验编号及系统路径。所有业绩数字均为两种配置之间的相对差值（百分点，pp）。</div>
+
+<section id="summary">
+<h2 style="border-top:none;margin-top:26px;padding-top:0">摘要</h2>
+<p class="lead">一个长期运行的截面选股研究项目，与 DeepSeek 两份技术报告的新架构遵循同一批设计原理，而且是在完全不同的任务、尺度和动机下被各自选中的。最深的共同点是"精确的近期局部 + 压缩的远期全局"，其次是"廉价打分 → 稀疏选择 → 复用"和"有界、恒等起点的残差混合"。反过来，这个选股研究有几条两份报告没有覆盖的经验可以带给基础模型研究；两份报告也指出了它走出平台期最可能有效的方向。</p>
+
+<div class="kpis">
+  <div class="kpi"><div class="v">0.87pp</div><div class="k">当前最佳距离内部目标的差距，约为配对置信区间半宽（≈0.4pp）的 2 倍</div></div>
+  <div class="kpi"><div class="v">~1,100</div><div class="k">最后一次大幅爬升之后的实验数，主指标累计只多了约 0.25pp</div></div>
+  <div class="kpi"><div class="v">0.82</div><div class="k">学生对教师排序的保留度（RankIC），教师提升难以传给学生</div></div>
+  <div class="kpi"><div class="v">≈6pp</div><div class="k">几个推理期模块相对裸学生模型带来的增益</div></div>
+</div>
+
+<div class="tldr">
+<ol>
+  <li><b>问题一（关联）：</b>V4.1 把 DeepSeek-V4 概括为"以 SWA 为局部处理骨干、再加压缩全局上下文"（V4.1 p4）。选股研究用上千个实验独立得到了同样的分工：主模型用全部历史等权训练（加近期权重或缩短窗口都没有帮助，部分显著更差），在线读出只用最近约 20 个成熟日（稳定优于更长窗口），市场状态压缩成一个"近期赢家均值"条目。它的动态增强模块与 CSA 的 lightning indexer 几乎同构（打分 → top-k → 精算），状态缺失时的有界回放对应 V4.1 的 SWA Bounded Replay。</li>
+  <li><b>问题一（分歧）：</b>DeepSeek 用 top-k 是为了省算力。选股研究在低样本条件下发现硬 top-k 不是最优统计估计：把"正 IC Top-k 加权"换成稠密 ridge 后，全期主指标 +0.41pp，沿这条路线继续改进累计 +2.18pp。</li>
+  <li><b>问题二（给基础模型的新 trick）：</b>最值得验证的三条是：成熟窗口闭式岭读出（一种短窗 fast weights：窗口要短、幅度要小且固定）；有界对比外推（逐坐标截断、只放大正向变化、只用最新一步差分，差分外推贡献约 2.3pp）；蒸馏可迁移性规律（教师提升小于学生模仿误差时传不过去，应按学生收益选教师）。</li>
+  <li><b>问题三（loop transformer）：</b>该研究的残差链本质上是一次展开的迭代精修：小步长有效、×2 过松弛有效、×4 有害、末端截断外推带来额外跳升。mHC 的双随机矩阵对乘法封闭，天然适合权重共享的循环；CSA2 的 Full / Reindex / Reuse 可以直接移植为跨迭代 KV 复用。</li>
+  <li><b>问题四（给选股研究的提升）：</b>平台期的瓶颈在学生的学习接口和信息量，不在教师：十几种教师变体蒸馏出的学生落在约 0.25pp 的窄带内。最相关的三个方向是：OPD 式的全截面、头部加权、reverse-KL 蒸馏（保留 MSE 锚）；按学生收益而非教师得分选教师并加隐状态蒸馏；以及 V4.1 的核心教训，即数据与环境管线的边际回报远高于算法创新（V4.1 p25）。</li>
+  <li><b>注意：</b>该研究的全部评价年度都已被开发暴露；文中多数配对比较的置信区间跨零；类比不等于证据，第 3–5 节的迁移建议都是待验证的假设。</li>
+</ol>
+</div>
+</section>
+
+<section id="bg">
+<h2>1. 背景与证据基础</h2>
+
+<h3 id="bg-project">1.1 选股研究是什么，走到了哪里</h3>
+<p>这是一个长期运行的截面选股研究：每天给全市场数千只股票打分，以分层多空回测的年化收益作为主指标。下文中"后段"指最近三个完整评价年度，"全期"指全部评价年度。研究累计两千余个预登记实验，主线大致分三段：</p>
+<ul class="tight">
+  <li><b>第一段：NN 主干与动态增强。</b>上千维特征的残差 MLP、参数 EMA、对头部持仓风险暴露的软惩罚、短期限标签、把候选因子的稀疏选择改为稠密 ridge、头部修正强度网格。</li>
+  <li><b>第二段：成熟窗口在线读出与残差链。</b>隐藏层随机投影后的短窗 ridge 读出、资金流与一致预期读出、排名头 ×2 外推、风格外推，最终形成一个由树、十几个 NN 和多层残差组成的复杂教师。</li>
+  <li><b>第三段：教师—学生。</b>约 40 万参数的 FiLM 学生学习教师排序，再接"完整配方"：学生与经高斯秩校准的树模型各半，加短窗读出、风格外推和截断差分外推。当前最佳方案的完整配方比裸学生高约 6pp。</li>
+</ul>
+
+<figure>
+<div class="frame"><svg viewBox="0 0 960 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="主指标累计前沿与全部实验散点（相对值）" style="width:100%;height:auto;font-family:inherit">
+<rect width="960" height="420" fill="#fffdf8"/>
+<line x1="64" y1="366.0" x2="936" y2="366.0" stroke="#ece8de"/>
+<text x="56" y="370.0" font-size="11" text-anchor="end" fill="#6b7280">-14</text>
+<line x1="64" y1="323.8" x2="936" y2="323.8" stroke="#ece8de"/>
+<text x="56" y="327.8" font-size="11" text-anchor="end" fill="#6b7280">-12</text>
+<line x1="64" y1="281.5" x2="936" y2="281.5" stroke="#ece8de"/>
+<text x="56" y="285.5" font-size="11" text-anchor="end" fill="#6b7280">-10</text>
+<line x1="64" y1="239.2" x2="936" y2="239.2" stroke="#ece8de"/>
+<text x="56" y="243.2" font-size="11" text-anchor="end" fill="#6b7280">-8</text>
+<line x1="64" y1="197.0" x2="936" y2="197.0" stroke="#ece8de"/>
+<text x="56" y="201.0" font-size="11" text-anchor="end" fill="#6b7280">-6</text>
+<line x1="64" y1="154.8" x2="936" y2="154.8" stroke="#ece8de"/>
+<text x="56" y="158.8" font-size="11" text-anchor="end" fill="#6b7280">-4</text>
+<line x1="64" y1="112.5" x2="936" y2="112.5" stroke="#ece8de"/>
+<text x="56" y="116.5" font-size="11" text-anchor="end" fill="#6b7280">-2</text>
+<line x1="64" y1="70.2" x2="936" y2="70.2" stroke="#ece8de"/>
+<text x="56" y="74.2" font-size="11" text-anchor="end" fill="#6b7280">0</text>
+<line x1="64" y1="28.0" x2="936" y2="28.0" stroke="#ece8de"/>
+<text x="56" y="32.0" font-size="11" text-anchor="end" fill="#6b7280">+2</text>
+<line x1="64.0" y1="366" x2="64.0" y2="371" stroke="#9ca3af"/>
+<text x="64.0" y="385" font-size="11" text-anchor="middle" fill="#6b7280">0%</text>
+<line x1="238.4" y1="366" x2="238.4" y2="371" stroke="#9ca3af"/>
+<text x="238.4" y="385" font-size="11" text-anchor="middle" fill="#6b7280">20%</text>
+<line x1="412.8" y1="366" x2="412.8" y2="371" stroke="#9ca3af"/>
+<text x="412.8" y="385" font-size="11" text-anchor="middle" fill="#6b7280">40%</text>
+<line x1="587.2" y1="366" x2="587.2" y2="371" stroke="#9ca3af"/>
+<text x="587.2" y="385" font-size="11" text-anchor="middle" fill="#6b7280">60%</text>
+<line x1="761.6" y1="366" x2="761.6" y2="371" stroke="#9ca3af"/>
+<text x="761.6" y="385" font-size="11" text-anchor="middle" fill="#6b7280">80%</text>
+<line x1="936.0" y1="366" x2="936.0" y2="371" stroke="#9ca3af"/>
+<text x="936.0" y="385" font-size="11" text-anchor="middle" fill="#6b7280">100%</text>
+<line x1="64" y1="366" x2="936" y2="366" stroke="#9ca3af"/>
+<text x="18" y="197" font-size="11.5" text-anchor="middle" fill="#6b7280" transform="rotate(-90 18 197)">相对当前最佳（pp）</text>
+<circle cx="76.2" cy="272.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="147.1" cy="250.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="156.3" cy="249.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="156.8" cy="250.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="167.9" cy="256.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="179.6" cy="251.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="184.7" cy="232.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="185.2" cy="223.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="190.7" cy="274.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="200.9" cy="220.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="210.5" cy="325.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="211.0" cy="325.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="215.6" cy="225.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="216.6" cy="208.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="217.1" cy="210.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="222.7" cy="199.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="223.7" cy="199.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="224.7" cy="203.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="225.2" cy="203.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="225.7" cy="194.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="226.2" cy="203.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="227.8" cy="197.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="228.3" cy="198.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="228.8" cy="194.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="229.8" cy="197.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="231.8" cy="205.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="232.3" cy="204.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="234.3" cy="205.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="237.9" cy="199.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="244.0" cy="211.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="251.1" cy="360.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="251.6" cy="340.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="252.1" cy="350.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="252.6" cy="358.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="253.1" cy="300.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="253.6" cy="323.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="254.1" cy="254.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="255.1" cy="298.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="255.6" cy="305.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="256.1" cy="234.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="256.7" cy="234.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="257.2" cy="121.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="257.7" cy="119.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="258.2" cy="113.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="258.7" cy="127.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="259.2" cy="115.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="259.7" cy="126.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="260.2" cy="338.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="260.7" cy="310.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="261.2" cy="284.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="261.7" cy="261.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="262.2" cy="140.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="262.7" cy="113.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="263.2" cy="195.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="263.7" cy="279.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="264.3" cy="172.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="264.8" cy="170.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="265.3" cy="202.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="265.8" cy="199.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="266.3" cy="316.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="266.8" cy="263.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="267.3" cy="204.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="267.8" cy="226.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="268.3" cy="265.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="268.8" cy="333.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="269.3" cy="277.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="269.8" cy="294.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="270.3" cy="301.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="270.8" cy="221.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="271.4" cy="214.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="271.9" cy="210.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="272.4" cy="187.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="272.9" cy="180.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="273.4" cy="205.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="273.9" cy="210.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="274.4" cy="212.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="274.9" cy="224.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="275.4" cy="217.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="275.9" cy="225.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="276.4" cy="210.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="276.9" cy="219.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="277.4" cy="239.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="277.9" cy="213.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="278.5" cy="199.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="279.0" cy="204.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="279.5" cy="183.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="280.0" cy="177.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="280.5" cy="151.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="281.0" cy="134.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="281.5" cy="131.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="282.0" cy="132.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="282.5" cy="228.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="283.0" cy="245.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="283.5" cy="206.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="284.0" cy="207.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="284.5" cy="209.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="285.0" cy="210.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="285.5" cy="223.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="286.1" cy="217.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="286.6" cy="211.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="287.1" cy="212.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="287.6" cy="223.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="288.1" cy="224.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="288.6" cy="227.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="289.1" cy="225.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="289.6" cy="212.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="290.1" cy="229.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="290.6" cy="211.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="291.1" cy="205.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="291.6" cy="186.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="292.1" cy="187.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="292.6" cy="205.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="293.2" cy="248.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="293.7" cy="211.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="294.2" cy="204.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="294.7" cy="220.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="295.2" cy="248.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="295.7" cy="224.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="296.2" cy="206.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="296.7" cy="192.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="297.2" cy="205.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="297.7" cy="136.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="298.2" cy="174.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="298.7" cy="212.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="299.2" cy="261.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="299.7" cy="289.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="300.3" cy="281.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="300.8" cy="203.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="301.3" cy="181.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="310.9" cy="231.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="311.4" cy="253.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="311.9" cy="193.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="312.4" cy="199.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="312.9" cy="182.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="313.4" cy="185.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="313.9" cy="108.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="314.4" cy="105.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="315.0" cy="184.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="315.5" cy="178.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="318.0" cy="112.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="318.5" cy="116.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="319.0" cy="204.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="319.5" cy="213.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="321.0" cy="89.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="321.5" cy="85.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="322.1" cy="226.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="322.6" cy="277.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="323.1" cy="101.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="323.6" cy="119.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="324.1" cy="224.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="324.6" cy="236.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="325.1" cy="155.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="325.6" cy="151.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="326.1" cy="109.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="326.6" cy="135.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="327.1" cy="96.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="327.6" cy="116.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="328.1" cy="208.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="328.6" cy="203.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="329.1" cy="215.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="329.7" cy="219.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="330.2" cy="213.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="330.7" cy="213.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="331.2" cy="83.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="331.7" cy="85.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="332.2" cy="205.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="332.7" cy="216.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="333.2" cy="99.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="333.7" cy="116.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="334.2" cy="212.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="334.7" cy="216.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="335.2" cy="98.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="335.7" cy="183.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="336.2" cy="229.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="336.8" cy="219.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="337.3" cy="204.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="337.8" cy="206.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="338.3" cy="217.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="338.8" cy="242.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="339.3" cy="219.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="339.8" cy="220.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="340.3" cy="227.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="340.8" cy="211.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="341.3" cy="82.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="341.8" cy="86.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="342.3" cy="77.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="342.8" cy="78.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="343.3" cy="83.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="343.9" cy="81.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="344.4" cy="211.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="344.9" cy="208.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="345.4" cy="78.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="346.4" cy="210.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="346.9" cy="216.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="347.4" cy="199.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="347.9" cy="196.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="348.4" cy="224.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="348.9" cy="208.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="349.4" cy="197.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="349.9" cy="195.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="350.4" cy="202.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="350.9" cy="214.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="351.5" cy="204.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="352.0" cy="204.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="352.5" cy="133.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="353.0" cy="109.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="353.5" cy="203.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="354.0" cy="209.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="354.5" cy="80.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="355.0" cy="75.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="355.5" cy="219.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="356.0" cy="212.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="356.5" cy="98.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="357.0" cy="105.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="357.5" cy="218.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="358.0" cy="212.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="358.6" cy="77.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="359.1" cy="79.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="359.6" cy="216.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="360.1" cy="258.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="360.6" cy="124.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="361.1" cy="101.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="361.6" cy="102.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="362.1" cy="84.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="362.6" cy="204.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="363.1" cy="205.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="363.6" cy="223.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="364.1" cy="219.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="364.6" cy="219.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="365.1" cy="226.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="365.7" cy="219.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="366.2" cy="216.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="366.7" cy="206.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="367.2" cy="208.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="367.7" cy="202.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="368.2" cy="200.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="368.7" cy="211.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="369.2" cy="218.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="369.7" cy="199.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="370.2" cy="201.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="370.7" cy="86.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="371.2" cy="84.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="371.7" cy="211.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="372.2" cy="225.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="372.7" cy="193.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="373.3" cy="195.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="373.8" cy="93.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="374.3" cy="98.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="374.8" cy="79.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="375.3" cy="95.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="375.8" cy="217.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="376.3" cy="210.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="376.8" cy="217.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="377.3" cy="214.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="377.8" cy="207.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="378.3" cy="216.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="378.8" cy="196.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="379.3" cy="197.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="379.8" cy="216.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="380.4" cy="231.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="380.9" cy="214.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="381.4" cy="232.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="381.9" cy="230.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="382.4" cy="225.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="382.9" cy="230.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="383.4" cy="226.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="383.9" cy="209.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="384.4" cy="209.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="384.9" cy="215.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="385.4" cy="209.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="385.9" cy="215.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="386.4" cy="219.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="386.9" cy="208.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="387.5" cy="214.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="388.0" cy="134.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="388.5" cy="117.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="389.0" cy="83.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="389.5" cy="114.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="390.0" cy="128.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="390.5" cy="212.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="391.0" cy="108.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="391.5" cy="78.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="392.0" cy="124.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="392.5" cy="106.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="393.0" cy="204.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="393.5" cy="206.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="394.0" cy="208.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="394.5" cy="208.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="395.1" cy="81.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="395.6" cy="112.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="396.1" cy="76.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="396.6" cy="108.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="397.1" cy="86.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="397.6" cy="111.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="398.1" cy="211.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="398.6" cy="206.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="399.1" cy="216.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="399.6" cy="216.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="400.1" cy="202.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="400.6" cy="205.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="401.1" cy="204.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="401.6" cy="206.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="402.2" cy="205.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="402.7" cy="223.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="403.2" cy="205.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="403.7" cy="198.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="404.2" cy="221.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="404.7" cy="195.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="405.2" cy="97.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="405.7" cy="83.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="406.2" cy="198.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="406.7" cy="196.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="407.2" cy="196.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="407.7" cy="195.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="408.2" cy="224.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="408.7" cy="209.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="409.3" cy="94.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="409.8" cy="121.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="410.3" cy="118.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="410.8" cy="113.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="411.3" cy="77.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="411.8" cy="96.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="412.3" cy="82.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="412.8" cy="76.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="413.3" cy="115.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="413.8" cy="84.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="414.3" cy="99.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="414.8" cy="80.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="415.3" cy="219.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="415.8" cy="219.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="416.3" cy="233.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="416.9" cy="235.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="417.4" cy="184.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="417.9" cy="179.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="418.4" cy="225.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="418.9" cy="188.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="419.4" cy="103.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="419.9" cy="103.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="420.4" cy="120.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="420.9" cy="117.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="421.4" cy="122.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="421.9" cy="128.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="422.4" cy="122.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="422.9" cy="147.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="423.4" cy="86.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="424.0" cy="99.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="424.5" cy="96.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="425.0" cy="96.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="425.5" cy="227.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="426.0" cy="203.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="426.5" cy="134.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="427.0" cy="141.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="427.5" cy="149.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="428.0" cy="102.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="428.5" cy="88.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="429.0" cy="102.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="429.5" cy="96.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="430.0" cy="115.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="430.5" cy="104.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="431.1" cy="96.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="431.6" cy="98.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="432.1" cy="136.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="432.6" cy="103.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="433.1" cy="125.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="433.6" cy="114.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="434.1" cy="115.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="434.6" cy="136.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="435.1" cy="104.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="435.6" cy="101.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="436.1" cy="107.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="436.6" cy="152.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="437.1" cy="113.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="437.6" cy="98.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="438.1" cy="94.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="438.7" cy="112.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="439.2" cy="103.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="439.7" cy="100.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="440.2" cy="105.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="440.7" cy="114.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="441.2" cy="144.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="441.7" cy="105.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="442.2" cy="78.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="442.7" cy="95.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="443.2" cy="99.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="443.7" cy="92.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="444.2" cy="107.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="444.7" cy="108.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="445.2" cy="204.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="445.8" cy="151.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="446.3" cy="111.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="446.8" cy="100.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="447.3" cy="92.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="447.8" cy="264.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="448.3" cy="283.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="448.8" cy="126.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="449.3" cy="94.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="449.8" cy="137.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="450.3" cy="127.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="450.8" cy="97.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="451.3" cy="92.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="451.8" cy="121.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="452.3" cy="103.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="452.9" cy="94.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="453.4" cy="90.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="453.9" cy="132.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="454.4" cy="150.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="454.9" cy="191.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="455.4" cy="151.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="455.9" cy="121.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="456.4" cy="162.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="456.9" cy="147.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="457.4" cy="132.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="457.9" cy="135.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="458.4" cy="135.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="458.9" cy="219.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="459.4" cy="223.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="459.9" cy="220.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="460.5" cy="217.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="461.0" cy="178.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="461.5" cy="177.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="462.0" cy="176.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="462.5" cy="176.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="463.0" cy="108.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="463.5" cy="106.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="464.0" cy="83.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="464.5" cy="84.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="465.0" cy="84.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="465.5" cy="85.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="466.0" cy="94.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="466.5" cy="93.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="467.0" cy="199.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="467.6" cy="110.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="468.1" cy="101.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="468.6" cy="266.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="469.1" cy="87.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="469.6" cy="77.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="470.1" cy="189.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="470.6" cy="187.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="471.1" cy="191.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="471.6" cy="144.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="472.1" cy="152.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="472.6" cy="155.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="473.1" cy="242.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="473.6" cy="259.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="474.1" cy="260.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="474.7" cy="245.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="475.2" cy="181.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="475.7" cy="198.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="476.2" cy="212.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="476.7" cy="186.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="477.2" cy="77.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="477.7" cy="82.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="478.2" cy="84.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="478.7" cy="87.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="479.2" cy="257.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="479.7" cy="275.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="480.2" cy="242.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="480.7" cy="261.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="481.2" cy="246.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="481.7" cy="203.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="482.3" cy="207.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="482.8" cy="180.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="483.3" cy="195.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="483.8" cy="194.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="484.3" cy="90.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="484.8" cy="81.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="485.3" cy="84.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="485.8" cy="83.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="486.3" cy="79.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="492.9" cy="284.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="493.4" cy="301.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="493.9" cy="250.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="494.4" cy="256.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="494.9" cy="249.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="495.4" cy="234.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="495.9" cy="189.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="496.5" cy="189.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="497.0" cy="73.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="497.5" cy="78.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="498.0" cy="197.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="498.5" cy="204.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="499.0" cy="78.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="499.5" cy="79.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="509.1" cy="70.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="512.2" cy="98.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="512.7" cy="95.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="513.2" cy="100.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="513.7" cy="94.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="514.2" cy="86.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="514.7" cy="88.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="515.2" cy="80.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="515.7" cy="81.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="516.2" cy="229.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="516.7" cy="248.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="517.2" cy="102.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="517.7" cy="113.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="518.3" cy="257.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="518.8" cy="269.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="519.3" cy="275.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="519.8" cy="273.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="520.3" cy="101.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="520.8" cy="108.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="521.3" cy="104.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="521.8" cy="105.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="522.3" cy="261.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="522.8" cy="271.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="523.3" cy="266.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="523.8" cy="271.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="524.3" cy="96.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="524.8" cy="103.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="525.3" cy="100.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="525.9" cy="104.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="526.4" cy="259.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="526.9" cy="259.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="527.4" cy="102.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="527.9" cy="105.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="528.4" cy="263.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="528.9" cy="261.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="529.4" cy="103.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="529.9" cy="99.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="530.4" cy="285.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="530.9" cy="252.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="531.4" cy="115.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="531.9" cy="103.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="532.4" cy="261.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="533.0" cy="253.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="533.5" cy="102.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="534.0" cy="103.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="534.5" cy="260.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="535.0" cy="266.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="535.5" cy="105.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="536.0" cy="105.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="536.5" cy="246.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="537.0" cy="256.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="537.5" cy="109.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="538.0" cy="110.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="538.5" cy="262.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="539.0" cy="254.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="539.5" cy="104.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="540.1" cy="100.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="540.6" cy="268.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="541.1" cy="250.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="541.6" cy="106.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="542.1" cy="105.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="542.6" cy="245.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="543.1" cy="248.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="543.6" cy="260.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="544.1" cy="288.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="544.6" cy="99.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="545.1" cy="99.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="545.6" cy="103.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="546.1" cy="101.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="546.6" cy="247.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="547.1" cy="242.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="547.7" cy="264.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="548.2" cy="274.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="548.7" cy="100.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="549.2" cy="104.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="549.7" cy="97.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="550.2" cy="102.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="550.7" cy="250.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="551.2" cy="269.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="551.7" cy="96.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="552.2" cy="108.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="552.7" cy="244.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="553.2" cy="254.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="553.7" cy="102.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="554.2" cy="100.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="554.8" cy="191.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="555.3" cy="202.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="555.8" cy="79.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="556.3" cy="91.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="556.8" cy="194.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="557.3" cy="198.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="557.8" cy="83.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="558.3" cy="83.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="558.8" cy="190.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="559.3" cy="190.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="559.8" cy="197.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="560.3" cy="217.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="560.8" cy="83.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="561.3" cy="81.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="561.9" cy="85.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="562.4" cy="84.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="562.9" cy="249.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="563.4" cy="249.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="563.9" cy="95.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="564.4" cy="93.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="564.9" cy="191.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="565.4" cy="205.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="565.9" cy="79.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="566.4" cy="76.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="566.9" cy="190.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="567.4" cy="191.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="567.9" cy="77.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="568.4" cy="76.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="568.9" cy="78.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="569.5" cy="77.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="570.0" cy="75.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="570.5" cy="83.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="571.0" cy="74.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="571.5" cy="76.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="572.0" cy="81.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="572.5" cy="86.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="573.0" cy="70.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="573.5" cy="78.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="574.0" cy="73.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="574.5" cy="73.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="575.0" cy="84.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="575.5" cy="75.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="576.0" cy="71.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="576.6" cy="84.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="577.1" cy="74.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="577.6" cy="72.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="578.1" cy="197.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="578.6" cy="207.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="579.1" cy="206.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="579.6" cy="204.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="580.1" cy="87.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="580.6" cy="95.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="581.1" cy="84.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="581.6" cy="85.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="582.1" cy="182.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="582.6" cy="200.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="583.1" cy="181.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="583.7" cy="208.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="584.2" cy="192.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="584.7" cy="193.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="585.2" cy="168.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="585.7" cy="186.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="586.2" cy="180.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="586.7" cy="192.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="587.2" cy="191.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="587.7" cy="180.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="588.2" cy="180.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="588.7" cy="172.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="589.2" cy="177.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="589.7" cy="180.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="590.2" cy="156.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="590.7" cy="160.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="591.3" cy="103.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="591.8" cy="107.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="592.3" cy="107.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="592.8" cy="111.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="593.3" cy="86.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="593.8" cy="80.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="594.3" cy="195.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="594.8" cy="196.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="595.3" cy="196.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="595.8" cy="83.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="596.3" cy="83.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="596.8" cy="81.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="597.3" cy="197.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="597.8" cy="225.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="598.4" cy="177.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="598.9" cy="198.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="599.4" cy="101.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="599.9" cy="123.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="600.4" cy="98.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="600.9" cy="111.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="601.4" cy="204.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="601.9" cy="224.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="602.4" cy="228.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="602.9" cy="197.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="603.4" cy="215.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="603.9" cy="224.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="604.4" cy="87.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="604.9" cy="96.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="605.5" cy="100.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="606.0" cy="91.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="606.5" cy="89.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="607.0" cy="90.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="607.5" cy="211.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="608.0" cy="205.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="608.5" cy="220.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="609.0" cy="199.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="609.5" cy="210.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="610.0" cy="218.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="610.5" cy="83.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="611.0" cy="90.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="611.5" cy="98.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="612.0" cy="86.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="612.5" cy="85.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="613.1" cy="92.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="616.6" cy="283.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="617.1" cy="240.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="617.6" cy="235.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="618.1" cy="271.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="618.6" cy="267.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="619.1" cy="241.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="619.6" cy="256.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="620.2" cy="257.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="620.7" cy="260.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="621.2" cy="271.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="621.7" cy="247.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="622.2" cy="248.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="622.7" cy="258.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="623.2" cy="247.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="623.7" cy="100.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="624.2" cy="97.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="624.7" cy="105.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="625.2" cy="106.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="625.7" cy="101.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="626.2" cy="99.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="626.7" cy="100.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="627.3" cy="90.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="627.8" cy="230.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="628.3" cy="241.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="628.8" cy="215.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="629.3" cy="110.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="629.8" cy="103.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="630.3" cy="82.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="630.8" cy="216.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="631.3" cy="206.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="631.8" cy="89.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="632.3" cy="94.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="632.8" cy="249.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="633.3" cy="246.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="633.8" cy="228.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="634.3" cy="231.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="634.9" cy="223.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="635.4" cy="112.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="635.9" cy="114.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="636.4" cy="102.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="636.9" cy="94.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="637.4" cy="99.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="637.9" cy="197.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="638.4" cy="214.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="638.9" cy="203.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="639.4" cy="88.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="639.9" cy="96.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="640.4" cy="90.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="640.9" cy="238.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="641.4" cy="228.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="642.0" cy="236.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="642.5" cy="218.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="643.0" cy="218.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="643.5" cy="97.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="644.0" cy="85.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="644.5" cy="104.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="645.0" cy="83.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="645.5" cy="89.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="646.0" cy="256.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="646.5" cy="250.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="647.0" cy="199.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="647.5" cy="206.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="648.0" cy="197.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="648.5" cy="115.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="649.1" cy="107.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="649.6" cy="86.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="650.1" cy="99.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="650.6" cy="93.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="651.1" cy="257.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="651.6" cy="257.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="652.1" cy="259.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="652.6" cy="258.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="653.1" cy="199.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="653.6" cy="200.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="654.1" cy="200.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="654.6" cy="200.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="655.1" cy="101.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="655.6" cy="101.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="656.1" cy="100.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="656.7" cy="101.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="657.2" cy="86.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="657.7" cy="87.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="658.2" cy="87.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="658.7" cy="86.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="659.2" cy="256.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="659.7" cy="257.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="660.2" cy="256.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="660.7" cy="252.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="661.2" cy="198.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="661.7" cy="199.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="662.2" cy="202.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="662.7" cy="205.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="663.2" cy="103.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="663.8" cy="103.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="664.3" cy="99.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="664.8" cy="92.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="665.3" cy="84.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="665.8" cy="86.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="666.3" cy="85.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="666.8" cy="77.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="667.3" cy="217.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="667.8" cy="214.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="668.3" cy="106.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="668.8" cy="109.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="669.3" cy="123.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="669.8" cy="128.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="670.3" cy="127.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="670.9" cy="127.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="671.4" cy="271.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="671.9" cy="274.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="672.4" cy="269.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="672.9" cy="275.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="673.4" cy="103.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="673.9" cy="104.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="674.4" cy="106.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="674.9" cy="106.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="675.4" cy="117.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="675.9" cy="128.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="676.4" cy="119.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="676.9" cy="126.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="677.4" cy="260.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="677.9" cy="263.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="678.5" cy="265.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="679.0" cy="269.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="679.5" cy="99.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="680.0" cy="102.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="680.5" cy="103.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="681.0" cy="101.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="681.5" cy="121.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="682.0" cy="130.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="682.5" cy="112.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="683.0" cy="121.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="683.5" cy="271.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="684.0" cy="274.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="684.5" cy="262.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="685.0" cy="267.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="685.6" cy="102.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="686.1" cy="105.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="686.6" cy="99.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="687.1" cy="104.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="687.6" cy="112.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="688.1" cy="115.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="688.6" cy="107.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="689.1" cy="100.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="689.6" cy="250.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="690.1" cy="264.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="690.6" cy="249.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="691.1" cy="256.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="691.6" cy="104.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="692.1" cy="99.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="692.7" cy="103.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="693.2" cy="106.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="693.7" cy="115.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="694.2" cy="121.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="694.7" cy="114.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="695.2" cy="109.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="695.7" cy="254.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="696.2" cy="259.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="696.7" cy="261.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="697.2" cy="254.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="697.7" cy="98.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="698.2" cy="109.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="698.7" cy="101.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="699.2" cy="110.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="699.7" cy="359.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="700.8" cy="116.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="701.3" cy="111.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="701.8" cy="116.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="702.3" cy="124.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="702.8" cy="253.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="703.3" cy="267.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="703.8" cy="256.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="704.3" cy="263.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="704.8" cy="102.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="705.3" cy="106.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="705.8" cy="97.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="706.3" cy="106.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="706.8" cy="112.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="707.4" cy="105.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="707.9" cy="109.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="708.4" cy="95.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="708.9" cy="256.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="709.4" cy="256.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="709.9" cy="256.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="710.4" cy="255.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="710.9" cy="105.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="711.4" cy="110.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="711.9" cy="101.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="712.4" cy="112.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="712.9" cy="190.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="713.4" cy="195.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="713.9" cy="185.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="714.5" cy="184.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="715.0" cy="87.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="715.5" cy="88.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="716.0" cy="84.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="716.5" cy="81.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="717.0" cy="192.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="717.5" cy="193.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="718.0" cy="182.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="718.5" cy="187.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="719.0" cy="85.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="719.5" cy="84.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="720.0" cy="78.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="720.5" cy="80.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="721.0" cy="129.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="721.5" cy="122.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="722.1" cy="124.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="722.6" cy="129.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="723.1" cy="128.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="723.6" cy="129.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="724.1" cy="126.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="724.6" cy="130.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="725.1" cy="128.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="725.6" cy="115.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="726.1" cy="127.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="726.6" cy="124.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="727.1" cy="110.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="727.6" cy="115.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="728.1" cy="112.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="728.6" cy="112.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="729.2" cy="114.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="729.7" cy="116.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="730.2" cy="114.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="730.7" cy="107.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="731.2" cy="199.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="731.7" cy="205.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="732.2" cy="200.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="732.7" cy="207.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="733.2" cy="199.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="733.7" cy="203.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="734.2" cy="200.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="734.7" cy="202.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="735.2" cy="80.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="735.7" cy="79.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="736.3" cy="82.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="736.8" cy="82.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="737.3" cy="76.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="737.8" cy="77.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="738.3" cy="77.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="738.8" cy="79.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="739.3" cy="118.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="739.8" cy="111.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="740.3" cy="117.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="740.8" cy="113.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="741.3" cy="193.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="741.8" cy="191.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="742.3" cy="196.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="742.8" cy="193.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="743.3" cy="84.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="743.9" cy="84.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="744.4" cy="84.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="744.9" cy="85.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="745.4" cy="113.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="745.9" cy="115.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="746.4" cy="112.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="746.9" cy="111.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="747.4" cy="201.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="747.9" cy="201.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="748.4" cy="201.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="748.9" cy="200.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="749.4" cy="77.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="749.9" cy="78.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="750.4" cy="77.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="751.0" cy="76.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="751.5" cy="120.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="752.0" cy="115.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="752.5" cy="121.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="753.0" cy="113.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="753.5" cy="203.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="754.0" cy="204.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="754.5" cy="205.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="755.0" cy="204.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="755.5" cy="80.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="756.0" cy="85.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="756.5" cy="81.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="757.0" cy="86.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="757.5" cy="201.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="758.1" cy="345.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="758.6" cy="182.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="759.1" cy="125.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="759.6" cy="118.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="760.1" cy="117.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="760.6" cy="113.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="761.1" cy="116.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="761.6" cy="199.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="762.1" cy="201.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="762.6" cy="200.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="763.1" cy="201.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="763.6" cy="79.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="764.1" cy="82.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="764.6" cy="80.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="765.1" cy="80.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="765.7" cy="122.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="766.2" cy="124.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="766.7" cy="116.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="767.2" cy="114.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="767.7" cy="212.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="768.2" cy="210.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="768.7" cy="204.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="769.2" cy="206.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="769.7" cy="214.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="770.2" cy="204.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="770.7" cy="83.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="771.2" cy="82.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="771.7" cy="81.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="772.2" cy="82.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="772.8" cy="81.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="773.3" cy="80.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="773.8" cy="125.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="774.3" cy="115.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="774.8" cy="109.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="775.3" cy="113.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="775.8" cy="211.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="776.3" cy="203.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="776.8" cy="199.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="777.3" cy="200.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="777.8" cy="81.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="778.3" cy="82.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="778.8" cy="80.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="779.3" cy="75.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="779.9" cy="204.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="780.4" cy="201.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="780.9" cy="82.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="781.4" cy="79.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="781.9" cy="189.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="782.4" cy="191.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="782.9" cy="196.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="783.4" cy="189.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="783.9" cy="84.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="784.4" cy="86.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="784.9" cy="85.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="785.4" cy="89.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="785.9" cy="183.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="786.4" cy="189.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="786.9" cy="82.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="787.5" cy="91.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="788.0" cy="121.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="788.5" cy="118.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="789.0" cy="117.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="789.5" cy="110.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="790.0" cy="204.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="790.5" cy="199.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="791.0" cy="202.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="791.5" cy="203.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="792.0" cy="79.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="792.5" cy="81.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="793.0" cy="76.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="793.5" cy="80.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="794.0" cy="118.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="794.6" cy="124.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="795.1" cy="114.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="795.6" cy="116.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="796.1" cy="203.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="796.6" cy="205.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="797.1" cy="206.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="797.6" cy="200.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="798.1" cy="80.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="798.6" cy="81.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="799.1" cy="79.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="799.6" cy="79.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="800.1" cy="200.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="800.6" cy="200.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="801.1" cy="202.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="801.7" cy="75.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="802.2" cy="73.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="802.7" cy="80.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="803.2" cy="115.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="803.7" cy="116.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="804.2" cy="116.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="804.7" cy="200.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="805.2" cy="200.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="805.7" cy="200.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="806.2" cy="78.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="806.7" cy="76.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="807.2" cy="76.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="807.7" cy="116.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="808.2" cy="114.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="808.7" cy="115.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="809.3" cy="200.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="809.8" cy="201.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="810.3" cy="200.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="810.8" cy="77.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="811.3" cy="77.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="811.8" cy="77.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="812.3" cy="115.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="812.8" cy="115.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="813.3" cy="200.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="813.8" cy="199.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="814.3" cy="78.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="814.8" cy="77.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="815.3" cy="112.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="815.8" cy="113.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="816.4" cy="200.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="816.9" cy="201.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="817.4" cy="77.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="817.9" cy="79.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="818.4" cy="116.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="818.9" cy="114.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="819.4" cy="114.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="819.9" cy="202.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="820.4" cy="199.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="820.9" cy="199.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="821.4" cy="77.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="821.9" cy="78.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="822.4" cy="79.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="822.9" cy="112.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="823.5" cy="113.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="824.0" cy="200.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="824.5" cy="202.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="825.0" cy="77.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="825.5" cy="77.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="826.0" cy="113.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="826.5" cy="112.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="827.0" cy="199.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="827.5" cy="199.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="828.0" cy="76.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="828.5" cy="78.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="829.0" cy="110.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="829.5" cy="113.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="830.0" cy="203.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="830.5" cy="203.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="831.1" cy="78.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="831.6" cy="80.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="832.1" cy="113.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="832.6" cy="112.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="833.1" cy="198.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="833.6" cy="202.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="834.1" cy="78.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="834.6" cy="78.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="835.1" cy="111.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="835.6" cy="136.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="836.1" cy="201.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="836.6" cy="222.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="837.1" cy="78.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="837.6" cy="97.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="838.2" cy="110.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="838.7" cy="114.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="839.2" cy="203.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="839.7" cy="203.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="840.2" cy="77.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="840.7" cy="76.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="841.2" cy="110.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="841.7" cy="109.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="842.2" cy="200.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="842.7" cy="200.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="843.2" cy="78.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="843.7" cy="80.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="844.2" cy="116.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="844.7" cy="116.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="845.3" cy="202.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="845.8" cy="204.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="846.3" cy="78.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="846.8" cy="77.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="847.3" cy="112.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="847.8" cy="112.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="848.3" cy="200.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="848.8" cy="201.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="849.3" cy="79.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="849.8" cy="80.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="850.3" cy="114.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="850.8" cy="115.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="851.3" cy="115.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="851.8" cy="200.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="852.3" cy="200.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="852.9" cy="200.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="853.4" cy="77.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="853.9" cy="76.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="854.4" cy="78.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="854.9" cy="113.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="855.4" cy="114.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="855.9" cy="117.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="856.4" cy="114.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="856.9" cy="116.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="857.4" cy="112.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="857.9" cy="201.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="858.4" cy="201.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="858.9" cy="200.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="859.4" cy="201.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="860.0" cy="81.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="860.5" cy="86.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="861.0" cy="78.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="861.5" cy="79.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="862.0" cy="117.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="862.5" cy="118.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="863.0" cy="203.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="863.5" cy="202.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="864.0" cy="75.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="864.5" cy="76.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="865.0" cy="113.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="865.5" cy="114.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="866.0" cy="199.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="866.5" cy="199.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="867.1" cy="77.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="867.6" cy="77.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="868.1" cy="114.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="868.6" cy="117.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="869.1" cy="200.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="869.6" cy="200.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="870.1" cy="78.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="870.6" cy="77.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="871.1" cy="116.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="871.6" cy="117.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="872.1" cy="199.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="872.6" cy="199.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="873.1" cy="77.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="873.6" cy="77.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="874.1" cy="329.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="874.7" cy="359.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="875.2" cy="176.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="875.7" cy="163.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="876.2" cy="315.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="876.7" cy="147.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="877.2" cy="247.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="877.7" cy="98.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="878.2" cy="191.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="878.7" cy="199.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="879.2" cy="85.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="879.7" cy="85.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="881.2" cy="115.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="881.8" cy="115.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="882.3" cy="118.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="882.8" cy="115.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="883.3" cy="189.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="883.8" cy="181.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="884.3" cy="190.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="884.8" cy="180.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="885.3" cy="85.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="885.8" cy="88.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="886.3" cy="83.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="886.8" cy="86.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="887.3" cy="170.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="887.8" cy="172.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="888.3" cy="166.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="888.9" cy="172.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="889.4" cy="169.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="889.9" cy="132.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="890.4" cy="134.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="890.9" cy="141.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="891.4" cy="134.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="891.9" cy="139.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="892.4" cy="77.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="892.9" cy="79.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="893.4" cy="80.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="893.9" cy="77.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="894.4" cy="76.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="894.9" cy="80.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="895.4" cy="78.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="895.9" cy="79.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="896.5" cy="80.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="897.0" cy="79.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="897.5" cy="74.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="898.0" cy="78.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="898.5" cy="116.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="899.0" cy="113.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="899.5" cy="121.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="900.0" cy="117.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="900.5" cy="196.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="901.0" cy="183.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="901.5" cy="195.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="902.0" cy="186.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="902.5" cy="82.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="903.0" cy="88.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="903.6" cy="84.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="904.1" cy="87.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="904.6" cy="194.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="905.1" cy="190.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="905.6" cy="199.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="906.1" cy="194.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="906.6" cy="74.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="907.1" cy="79.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="907.6" cy="75.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="908.1" cy="75.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="908.6" cy="198.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="909.1" cy="202.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="909.6" cy="182.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="910.1" cy="183.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="910.7" cy="79.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="911.2" cy="80.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="911.7" cy="87.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="912.2" cy="87.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="912.7" cy="199.0" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="913.2" cy="201.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="913.7" cy="198.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="914.2" cy="199.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="914.7" cy="75.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="915.2" cy="75.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="915.7" cy="73.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="916.2" cy="73.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="916.7" cy="206.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="917.2" cy="178.4" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="917.7" cy="248.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="918.3" cy="202.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="918.8" cy="178.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="919.3" cy="249.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="919.8" cy="207.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="920.3" cy="129.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="920.8" cy="152.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="921.3" cy="203.6" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="921.8" cy="125.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="922.3" cy="156.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="922.8" cy="202.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="923.3" cy="197.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="923.8" cy="205.1" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="924.3" cy="194.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="924.8" cy="81.8" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="925.4" cy="88.3" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="925.9" cy="82.9" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="926.4" cy="85.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="928.4" cy="122.5" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="928.9" cy="115.7" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<circle cx="929.4" cy="116.2" r="1.9" fill="#64748b" fill-opacity="0.32"/>
+<line x1="64" y1="51.9" x2="936" y2="51.9" stroke="#b91c1c" stroke-dasharray="6 4" stroke-width="1.4"/>
+<text x="932" y="45.9" font-size="12" text-anchor="end" fill="#b91c1c" stroke="#fffdf8" stroke-width="3.5" stroke-linejoin="round" paint-order="stroke">内部目标（+0.87pp）</text>
+<path d="M76.2,272.9 H147.1V250.1 H156.3V249.8 H184.7V232.1 H185.2V223.6 H200.9V220.7 H216.6V208.6 H222.7V199.4 H223.7V199.3 H225.7V194.3 H228.8V194.2 H257.2V121.5 H257.7V119.3 H258.2V113.4 H313.9V108.8 H314.4V105.0 H321.0V89.8 H321.5V85.7 H331.2V83.2 H341.3V82.4 H342.3V77.7 H355.0V75.7 H497.0V73.9 H509.1V70.2 H929.4" fill="none" stroke="#9a3412" stroke-width="2.2"/>
+<circle cx="76.2" cy="272.9" r="3.2" fill="#9a3412"/>
+<text x="82.2" y="286.9" font-size="11.5" text-anchor="start" fill="#7c2d12" stroke="#fffdf8" stroke-width="3.5" stroke-linejoin="round" paint-order="stroke">动态增强</text>
+<circle cx="147.1" cy="250.1" r="3.2" fill="#9a3412"/>
+<text x="153.1" y="264.1" font-size="11.5" text-anchor="start" fill="#7c2d12" stroke="#fffdf8" stroke-width="3.5" stroke-linejoin="round" paint-order="stroke">在线读出</text>
+<circle cx="156.3" cy="249.8" r="3.2" fill="#9a3412"/>
+<circle cx="184.7" cy="232.1" r="3.2" fill="#9a3412"/>
+<circle cx="185.2" cy="223.6" r="3.2" fill="#9a3412"/>
+<text x="191.2" y="237.6" font-size="11.5" text-anchor="start" fill="#7c2d12" stroke="#fffdf8" stroke-width="3.5" stroke-linejoin="round" paint-order="stroke">资金流/一致预期读出</text>
+<circle cx="200.9" cy="220.7" r="3.2" fill="#9a3412"/>
+<circle cx="216.6" cy="208.6" r="3.2" fill="#9a3412"/>
+<circle cx="222.7" cy="199.4" r="3.2" fill="#9a3412"/>
+<text x="228.7" y="213.4" font-size="11.5" text-anchor="start" fill="#7c2d12" stroke="#fffdf8" stroke-width="3.5" stroke-linejoin="round" paint-order="stroke">排名头 ×2 外推</text>
+<circle cx="223.7" cy="199.3" r="3.2" fill="#9a3412"/>
+<circle cx="225.7" cy="194.3" r="3.2" fill="#9a3412"/>
+<circle cx="228.8" cy="194.2" r="3.2" fill="#9a3412"/>
+<circle cx="257.2" cy="121.5" r="3.2" fill="#9a3412"/>
+<text x="251.2" y="111.5" font-size="11.5" text-anchor="end" fill="#7c2d12" stroke="#fffdf8" stroke-width="3.5" stroke-linejoin="round" paint-order="stroke">风格外推</text>
+<circle cx="257.7" cy="119.3" r="3.2" fill="#9a3412"/>
+<circle cx="258.2" cy="113.4" r="3.2" fill="#9a3412"/>
+<text x="266.2" y="129.4" font-size="11.5" text-anchor="start" fill="#7c2d12" stroke="#fffdf8" stroke-width="3.5" stroke-linejoin="round" paint-order="stroke">复杂教师</text>
+<circle cx="313.9" cy="108.8" r="3.2" fill="#9a3412"/>
+<circle cx="314.4" cy="105.0" r="3.2" fill="#9a3412"/>
+<circle cx="321.0" cy="89.8" r="3.2" fill="#9a3412"/>
+<circle cx="321.5" cy="85.7" r="3.2" fill="#9a3412"/>
+<text x="327.5" y="101.7" font-size="11.5" text-anchor="start" fill="#7c2d12" stroke="#fffdf8" stroke-width="3.5" stroke-linejoin="round" paint-order="stroke">差分截断外推</text>
+<circle cx="331.2" cy="83.2" r="3.2" fill="#9a3412"/>
+<circle cx="341.3" cy="82.4" r="3.2" fill="#9a3412"/>
+<circle cx="342.3" cy="77.7" r="3.2" fill="#9a3412"/>
+<circle cx="355.0" cy="75.7" r="3.2" fill="#9a3412"/>
+<text x="359.0" y="65.7" font-size="11.5" text-anchor="start" fill="#7c2d12" stroke="#fffdf8" stroke-width="3.5" stroke-linejoin="round" paint-order="stroke">高斯秩校准</text>
+<circle cx="497.0" cy="73.9" r="3.2" fill="#9a3412"/>
+<circle cx="509.1" cy="70.2" r="3.2" fill="#9a3412"/>
+<text x="513.1" y="60.2" font-size="11.5" text-anchor="start" fill="#7c2d12" stroke="#fffdf8" stroke-width="3.5" stroke-linejoin="round" paint-order="stroke">教师—学生（当前最佳）</text>
+<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#7c2d12"/></marker></defs>
+<line x1="509.1" y1="96.2" x2="929.4" y2="96.2" stroke="#7c2d12" marker-end="url(#arr)"/>
+<text x="719.3" y="111.2" font-size="12" text-anchor="middle" fill="#7c2d12" stroke="#fffdf8" stroke-width="3.5" stroke-linejoin="round" paint-order="stroke">平台期：此后约 830 个实验没有超过当前最佳</text>
+<text x="64" y="412" font-size="11.5" fill="#6b7280">横轴为研究进度（按实验先后），纵轴为后段主指标相对当前最佳的差值；灰点为全部实验，折线为累计最高值。</text>
+</svg></div>
+<figcaption>图 1｜后段主指标的累计前沿与全部实验散点。纵轴是相对当前最佳的差值（pp），横轴是研究进度。</figcaption>
+</figure>
+
+<p>图 1 里有三个对后文很重要的现象。第一，前沿最后一次大幅爬升靠的是风格外推、差分外推和高斯秩校准这类"推理期"模块，此后进入平台。第二，第三段的大量教师变体（异构专家、滞后专家、多期限、不同数据视角的专家等）蒸馏出的学生，完整配方都挤在约 0.25pp 的窄带里，裸学生也挤在另一条窄带里，教师之间的差异几乎没有传到学生。第三，完整配方比裸学生高约 6pp，主要增益来自树混合、读出、风格和差分这几个推理期模块。</p>
+
+<h3 id="bg-ds">1.2 两份报告的新架构速览</h3>
+<table>
+<thead><tr><th>模块</th><th>DeepSeek-V4（2026-04）</th><th>DeepSeek-V4.1-Flash（2026-09）</th></tr></thead>
+<tbody>
+<tr><td>规模</td><td>V4-Pro 1.6T 参数（激活 49B）；V4-Flash 284B（激活 13B）；1M 上下文；预训练 32–33T token</td><td>552B 主干 + 196B Engram；prefill 激活 8B、decode 激活 16B；多模态；1M 上下文；预训练 45T token</td></tr>
+<tr><td>注意力</td><td>混合注意力：CSA（每 4 个 token 压成 1 条，lightning indexer 选 top-k，Flash 512 / Pro 1024）+ HCA（每 128 个 token 压成 1 条，稠密）+ SWA 分支（n_win=128）+ attention sink；共享 KV 的 MQA，Q/KV 做 RMSNorm；部分 RoPE（p9–13）</td><td>CSA2：每层静态指定 Full / Reindex / Reuse 模式，跨层复用 main KV、indexer K 与 top-k；去掉 HCA 和重叠压缩；分层稀疏索引器，首个 Full 层建 2048 块 × 8 的候选池（p10–12）</td></tr>
+<tr><td>层间结构</td><td>—</td><td>CED：20 层因果编码器 + 20 层解码器，解码器的全局 KV 由编码器末层隐状态投影得到，SWA 仍逐层计算，prefill 计算近乎减半（p8–9，受 YoCo 启发）</td></tr>
+<tr><td>残差</td><td>mHC：4 条残差流，B 经 Sinkhorn 投影到双随机矩阵（谱范数 ≤1、对乘法封闭），A=σ(·)、C=2σ(·)，动态 + 静态参数、小初值门控（p7–8）</td><td>Single-Pass mHC：输入混合使用上一块的系数 A<sub>l−1</sub>，配合融合 kernel 使访存减半（p12–13）</td></tr>
+<tr><td>记忆与解码</td><td>MTP 深度 1（loss 权重 0.3 → 0.1）</td><td>Engram 哈希 n-gram 条件记忆（第 1、14 层）；DSpark 并行草稿，在冻结主干上单独训练；移除 MTP（p13–14）</td></tr>
+<tr><td>优化与稳定</td><td>Muon（混合 Newton–Schulz 10 步）+ AdamW；Anticipatory Routing、SwiGLU clamp（p14, p26）</td><td>head-wise Muon；Engram 表、embedding、预测头用 Sinkhorn-balanced 动量更新，免 Adam 状态（p14–16）；45T token 无不稳定</td></tr>
+<tr><td>KV 与精度</td><td>KV 中 RoPE 维 BF16、其余 FP8，indexer FP4；磁盘 KV 缓存三策略（p23）</td><td>主 KV FP4（QAT），全局 KV 890 字节/token，约 V4-Flash 的 1/4；SWA Bounded Replay 只重放最近 n_win 个 token 得到近似状态（p14, p19–20）</td></tr>
+<tr><td>后训练</td><td>领域专家 SFT + GRPO，再做多教师 OPD（reverse KL、全词表 logit、10 个以上教师，缓存教师末层隐状态现场重建 logits）；GRM；三档推理模式（p28–34）</td><td>"后训练没有算法创新"，增益几乎全部来自数据与环境合成；40 个以上异构教师的 OPD；RL 运行之间做模型合并；推理强度标量 b 与指数 token 惩罚（p6, p25, p27, p32, p34, p48–50）</td></tr>
+<tr><td>自述局限</td><td>为降低风险保留了大量初步验证过的 trick，架构偏复杂，未来要"提炼到最本质的设计"；Anticipatory Routing 与 SwiGLU clamp 有效但原理尚不清楚（p44）</td><td>新结构带来的鲁棒性边界尚未完全刻画，CSA2 的选择错误与 bounded replay 的近似可能在未测试的边界情况下退化（p37）</td></tr>
+</tbody>
+</table>
+
+<h3 id="bg-method">1.3 方法与证据等级</h3>
+<p>选股研究一侧的证据来自项目内部的实验汇总、单个实验报告与中期复盘（不公开）；DeepSeek 一侧的证据来自两份公开技术报告。每条对应关系都标了证据等级：</p>
+<ul class="tight">
+  <li><span class="badge bA">A</span> 机制层面同构，而且两边都有直接实证；</li>
+  <li><span class="badge bB">B</span> 原理相同，但实现、尺度或动机不同；</li>
+  <li><span class="badge bC">C</span> 松散类比，只作启发，不作论据。</li>
+</ul>
+<p class="muted small">数值口径：所有业绩数字都是两种配置在同一口径下的差值（pp），只在文中注明时给出置信区间。"主指标"指分层多空回测的年化收益，"辅指标"指简单多空回测的年化收益。</p>
+</section>
+
+<section id="q1">
+<h2>2. 问题一：选股研究的 trick / insight 与两份报告新架构的关联</h2>
+<p>逐个组件对照会得到一长串表面相似。更有用的是找出两边都在用的<b>设计原理</b>：它们在完全不同的任务（下一个 token 预测与截面收益排序）、尺度（万亿参数与几十万参数）和动机（算力、显存与统计效率）下被各自选中，因此更可能是一般规律。下面先给全景图和总表，再展开七条原理，最后说明类比在哪里失效。</p>
+
+<figure>
+<div class="frame"><svg viewBox="0 0 980 804" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="选股研究与 DeepSeek-V4/V4.1 的对应关系全景图" style="width:100%;height:auto;font-family:inherit">
+<rect width="980" height="804" fill="#fffdf8"/>
+<text x="210.0" y="30" font-size="15" font-weight="700" text-anchor="middle" fill="#9a3412">选股研究中的做法（含证据）</text>
+<text x="770.0" y="30" font-size="15" font-weight="700" text-anchor="middle" fill="#1e3a8a">DeepSeek-V4 / V4.1 中的对应</text>
+<text x="490.0" y="30" font-size="12" text-anchor="middle" fill="#6b7280">证据等级</text>
+<rect x="10" y="64" width="400" height="38" rx="7" fill="#fff7ed" stroke="#fdba74"/>
+<text x="24" y="87.5" font-size="13" fill="#431407">主模型全历史等权 + 短窗（约 20 成熟日）在线读出</text>
+<rect x="570" y="64" width="400" height="38" rx="7" fill="#eff6ff" stroke="#93c5fd"/>
+<text x="584" y="87.5" font-size="13" fill="#172554">SWA 局部骨干 + 压缩全局上下文（V4.1 p4）</text>
+<line x1="410" y1="83.0" x2="570" y2="83.0" stroke="#15803d" stroke-width="2" />
+<circle cx="490.0" cy="83.0" r="12" fill="#15803d"/>
+<text x="490.0" y="87.5" font-size="12.5" font-weight="700" text-anchor="middle" fill="#ffffff">A</text>
+<rect x="10" y="114" width="400" height="38" rx="7" fill="#fff7ed" stroke="#fdba74"/>
+<text x="24" y="137.5" font-size="13" fill="#431407">市场上下文：按近期收益选 Top-k 股票求特征均值</text>
+<rect x="570" y="114" width="400" height="38" rx="7" fill="#eff6ff" stroke="#93c5fd"/>
+<text x="584" y="137.5" font-size="13" fill="#172554">HCA 重压缩全局条目；CSA 打分—选择—聚合</text>
+<line x1="410" y1="133.0" x2="570" y2="133.0" stroke="#1d4ed8" stroke-width="2" stroke-dasharray="5 4"/>
+<circle cx="490.0" cy="133.0" r="12" fill="#1d4ed8"/>
+<text x="490.0" y="137.5" font-size="12.5" font-weight="700" text-anchor="middle" fill="#ffffff">B</text>
+<rect x="10" y="164" width="400" height="38" rx="7" fill="#fff7ed" stroke="#fdba74"/>
+<text x="24" y="187.5" font-size="13" fill="#431407">动态增强：残差 IC 打分 → Top-k → 只修头部</text>
+<rect x="570" y="164" width="400" height="38" rx="7" fill="#eff6ff" stroke="#93c5fd"/>
+<text x="584" y="187.5" font-size="13" fill="#172554">lightning indexer 打分 → top-k → 核心注意力</text>
+<line x1="410" y1="183.0" x2="570" y2="183.0" stroke="#15803d" stroke-width="2" />
+<circle cx="490.0" cy="183.0" r="12" fill="#15803d"/>
+<text x="490.0" y="187.5" font-size="12.5" font-weight="700" text-anchor="middle" fill="#ffffff">A</text>
+<rect x="10" y="214" width="400" height="38" rx="7" fill="#fff7ed" stroke="#fdba74"/>
+<text x="24" y="237.5" font-size="13" fill="#431407">精选候选池 ⊂ 全候选池（两级）</text>
+<rect x="570" y="214" width="400" height="38" rx="7" fill="#eff6ff" stroke="#93c5fd"/>
+<text x="584" y="237.5" font-size="13" fill="#172554">分层稀疏索引器：Full 层建池，Reindex 池内重打分</text>
+<line x1="410" y1="233.0" x2="570" y2="233.0" stroke="#15803d" stroke-width="2" />
+<circle cx="490.0" cy="233.0" r="12" fill="#15803d"/>
+<text x="490.0" y="237.5" font-size="12.5" font-weight="700" text-anchor="middle" fill="#ffffff">A</text>
+<rect x="10" y="264" width="400" height="38" rx="7" fill="#fff7ed" stroke="#fdba74"/>
+<text x="24" y="287.5" font-size="13" fill="#431407">多个读出共享 Gram；只缓存与主分数无关的部分</text>
+<rect x="570" y="264" width="400" height="38" rx="7" fill="#eff6ff" stroke="#93c5fd"/>
+<text x="584" y="287.5" font-size="13" fill="#172554">CSA2 Reindex / Reuse：共享 main KV 与 indexer K</text>
+<line x1="410" y1="283.0" x2="570" y2="283.0" stroke="#1d4ed8" stroke-width="2" stroke-dasharray="5 4"/>
+<circle cx="490.0" cy="283.0" r="12" fill="#1d4ed8"/>
+<text x="490.0" y="287.5" font-size="12.5" font-weight="700" text-anchor="middle" fill="#ffffff">B</text>
+<rect x="10" y="314" width="400" height="38" rx="7" fill="#fff7ed" stroke="#fdba74"/>
+<text x="24" y="337.5" font-size="13" fill="#431407">状态缺失时回放有界窗口，重建滚动状态</text>
+<rect x="570" y="314" width="400" height="38" rx="7" fill="#eff6ff" stroke="#93c5fd"/>
+<text x="584" y="337.5" font-size="13" fill="#172554">SWA Bounded Replay：只重放最近 n_win 个 token</text>
+<line x1="410" y1="333.0" x2="570" y2="333.0" stroke="#15803d" stroke-width="2" />
+<circle cx="490.0" cy="333.0" r="12" fill="#15803d"/>
+<text x="490.0" y="337.5" font-size="12.5" font-weight="700" text-anchor="middle" fill="#ffffff">A</text>
+<rect x="10" y="364" width="400" height="38" rx="7" fill="#fff7ed" stroke="#fdba74"/>
+<text x="24" y="387.5" font-size="13" fill="#431407">凸组合残差链；FiLM 有界、零初始化、缺失时恒等</text>
+<rect x="570" y="364" width="400" height="38" rx="7" fill="#eff6ff" stroke="#93c5fd"/>
+<text x="584" y="387.5" font-size="13" fill="#172554">mHC：双随机 B、有界 A/C、小初值门控</text>
+<line x1="410" y1="383.0" x2="570" y2="383.0" stroke="#1d4ed8" stroke-width="2" stroke-dasharray="5 4"/>
+<circle cx="490.0" cy="383.0" r="12" fill="#1d4ed8"/>
+<text x="490.0" y="387.5" font-size="12.5" font-weight="700" text-anchor="middle" fill="#ffffff">B</text>
+<rect x="10" y="414" width="400" height="38" rx="7" fill="#fff7ed" stroke="#fdba74"/>
+<text x="24" y="437.5" font-size="13" fill="#431407">处处截断：输入 clip、差分截断 ±1σ、tanh 调制</text>
+<rect x="570" y="414" width="400" height="38" rx="7" fill="#eff6ff" stroke="#93c5fd"/>
+<text x="584" y="437.5" font-size="13" fill="#172554">SwiGLU clamp；Q/KV RMSNorm 免 QK-Clip</text>
+<line x1="410" y1="433.0" x2="570" y2="433.0" stroke="#1d4ed8" stroke-width="2" stroke-dasharray="5 4"/>
+<circle cx="490.0" cy="433.0" r="12" fill="#1d4ed8"/>
+<text x="490.0" y="437.5" font-size="12.5" font-weight="700" text-anchor="middle" fill="#ffffff">B</text>
+<rect x="10" y="464" width="400" height="38" rx="7" fill="#fff7ed" stroke="#fdba74"/>
+<text x="24" y="487.5" font-size="13" fill="#431407">冻结隐状态上的读出有效，联合辅助头无效</text>
+<rect x="570" y="464" width="400" height="38" rx="7" fill="#eff6ff" stroke="#93c5fd"/>
+<text x="584" y="487.5" font-size="13" fill="#172554">DSpark 在冻结主干上单独训练，取代 MTP</text>
+<line x1="410" y1="483.0" x2="570" y2="483.0" stroke="#1d4ed8" stroke-width="2" stroke-dasharray="5 4"/>
+<circle cx="490.0" cy="483.0" r="12" fill="#1d4ed8"/>
+<text x="490.0" y="487.5" font-size="12.5" font-weight="700" text-anchor="middle" fill="#ffffff">B</text>
+<rect x="10" y="514" width="400" height="38" rx="7" fill="#fff7ed" stroke="#fdba74"/>
+<text x="24" y="537.5" font-size="13" fill="#431407">学生学教师排序，比学真实标签高约 3.6pp</text>
+<rect x="570" y="514" width="400" height="38" rx="7" fill="#eff6ff" stroke="#93c5fd"/>
+<text x="584" y="537.5" font-size="13" fill="#172554">多教师 OPD：reverse KL、全词表 logit（p32–33）</text>
+<line x1="410" y1="533.0" x2="570" y2="533.0" stroke="#1d4ed8" stroke-width="2" stroke-dasharray="5 4"/>
+<circle cx="490.0" cy="533.0" r="12" fill="#1d4ed8"/>
+<text x="490.0" y="537.5" font-size="12.5" font-weight="700" text-anchor="middle" fill="#ffffff">B</text>
+<rect x="10" y="564" width="400" height="38" rx="7" fill="#fff7ed" stroke="#fdba74"/>
+<text x="24" y="587.5" font-size="13" fill="#431407">独立学生参数平均变差，预测平均一直有效</text>
+<rect x="570" y="564" width="400" height="38" rx="7" fill="#eff6ff" stroke="#93c5fd"/>
+<text x="584" y="587.5" font-size="13" fill="#172554">logit 对齐规避权重合并的退化（DSV4 p33）</text>
+<line x1="410" y1="583.0" x2="570" y2="583.0" stroke="#15803d" stroke-width="2" />
+<circle cx="490.0" cy="583.0" r="12" fill="#15803d"/>
+<text x="490.0" y="587.5" font-size="12.5" font-weight="700" text-anchor="middle" fill="#ffffff">A</text>
+<rect x="10" y="614" width="400" height="38" rx="7" fill="#fff7ed" stroke="#fdba74"/>
+<text x="24" y="637.5" font-size="13" fill="#431407">信息源推动前沿；结构替换基本无效</text>
+<rect x="570" y="614" width="400" height="38" rx="7" fill="#eff6ff" stroke="#93c5fd"/>
+<text x="584" y="637.5" font-size="13" fill="#172554">数据与环境管线回报远超算法创新（V4.1 p25）</text>
+<line x1="410" y1="633.0" x2="570" y2="633.0" stroke="#15803d" stroke-width="2" />
+<circle cx="490.0" cy="633.0" r="12" fill="#15803d"/>
+<text x="490.0" y="637.5" font-size="12.5" font-weight="700" text-anchor="middle" fill="#ffffff">A</text>
+<rect x="10" y="664" width="400" height="38" rx="7" fill="#fff7ed" stroke="#fdba74"/>
+<text x="24" y="687.5" font-size="13" fill="#431407">复杂教师被小学生 + 少数推理期模块反超</text>
+<rect x="570" y="664" width="400" height="38" rx="7" fill="#eff6ff" stroke="#93c5fd"/>
+<text x="584" y="687.5" font-size="13" fill="#172554">“提炼到本质”（DSV4 p44）；V4.1 简化后更好</text>
+<line x1="410" y1="683.0" x2="570" y2="683.0" stroke="#15803d" stroke-width="2" />
+<circle cx="490.0" cy="683.0" r="12" fill="#15803d"/>
+<text x="490.0" y="687.5" font-size="12.5" font-weight="700" text-anchor="middle" fill="#ffffff">A</text>
+<rect x="10" y="714" width="400" height="38" rx="7" fill="#fff7ed" stroke="#fdba74"/>
+<text x="24" y="737.5" font-size="13" fill="#431407">强度旋钮的增益集中在中低档</text>
+<rect x="570" y="714" width="400" height="38" rx="7" fill="#eff6ff" stroke="#93c5fd"/>
+<text x="584" y="737.5" font-size="13" fill="#172554">推理强度标量 b 与指数 token 惩罚（V4.1 p34）</text>
+<line x1="410" y1="733.0" x2="570" y2="733.0" stroke="#1d4ed8" stroke-width="2" stroke-dasharray="5 4"/>
+<circle cx="490.0" cy="733.0" r="12" fill="#1d4ed8"/>
+<text x="490.0" y="737.5" font-size="12.5" font-weight="700" text-anchor="middle" fill="#ffffff">B</text>
+<text x="10" y="788" font-size="11.5" fill="#6b7280">A：机制同构且两边都有直接实证（实线）　B：原理相同、实现或动机不同（虚线）　C 级松散类比只在正文表格中列出</text>
+</svg></div>
+<figcaption>图 2｜对应关系全景图（只列 A、B 级）。左侧是选股研究中经过实验检验的做法，右侧是两份报告中的对应组件。</figcaption>
+</figure>
+
+<h3 id="q1-table">2.1 对应关系总表</h3>
+<table>
+<thead><tr><th>#</th><th>选股研究中的做法与证据</th><th>DeepSeek-V4 / V4.1 中的对应</th><th>等级</th><th>共同原理</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>主模型用全部历史等权训练：加半衰期没有帮助（一组匹配实验后段 −1.35pp，区间 [−2.25, −0.50]）；只用最近三年更差（全期 −3.94pp；树模型侧 −1.19pp）。在线读出只用最近约 20 个成熟日：优于 60 日（全期 +0.84pp；另一读出族后段 +1.11pp），也优于 120 日。</td><td>V4.1 把 V4 概括为"SWA 局部骨干 + 压缩全局上下文"，并据此"简化全局分支、基本保留局部注意力"（V4.1 p4）；SWA 窗口只有 128 个 token。</td><td><span class="badge bA">A</span></td><td>精确的近期 + 压缩的远期</td></tr>
+<tr><td>2</td><td>基线的市场上下文：按过去几日收益选 Top-k 股票，取其特征的截面均值，与原值、差值拼接。</td><td>HCA 的重压缩全局条目；CSA 的"打分—选 top-k—聚合"。</td><td><span class="badge bB">B</span></td><td>压缩的全局上下文</td></tr>
+<tr><td>3</td><td>动态增强：用最近约 20 个成熟日的残差 IC 给上千个候选因子打分，从精选池和全池各取正 IC 的 Top-k，权重与正 IC 成比例，只修正基础排名靠前的股票。</td><td>CSA 的 lightning indexer：低秩 indexer Q、ReLU 打分、按头加权，选出 top-k 后再做核心注意力（DSV4 p9–10）。</td><td><span class="badge bA">A</span></td><td>廉价打分 → 稀疏选择 → 精算</td></tr>
+<tr><td>4</td><td>精选候选池 ⊂ 全候选池：离线扫描活跃因子形成候选池，线上每天只在池内选。</td><td>分层稀疏索引器：首个 Full 层按块最大分数建立 16,384 个位置的候选池，后续 Reindex 层只在池内重新打分（V4.1 p11–12）。</td><td><span class="badge bA">A</span></td><td>两级候选池</td></tr>
+<tr><td>5</td><td>多个读出头共享同一个成熟窗口 Gram 矩阵（λ ∝ tr G / d）；缓存只存与主分数无关的一阶段因子标准化结果，与主分数相关的残差和滚动 IC 每次重算。</td><td>CSA2 的 Reindex 复用前层 main KV 与 indexer K，用本层 indexer Q 重新选 top-k；Reuse 连 top-k 一起复用（V4.1 p10–11）。</td><td><span class="badge bB">B</span></td><td>缓存 key 侧、重算 query 侧</td></tr>
+<tr><td>6</td><td>首次运行或日期不连续时，回放最近一段有界窗口，重建待结算队列与滚动 IC，接受近似状态。</td><td>SWA Bounded Replay：只重放最近 n_win 个 token 得到近似 SWA 状态，"把灾难性缺失变成可承受的退化"（V4.1 p19–20）。</td><td><span class="badge bA">A</span></td><td>有界回放重建近似状态</td></tr>
+<tr><td>7</td><td>残差链各级为固定凸组合或小幅修正：读出幅度 0.1 std 最好，0.25 和 0.5 std 分别 −0.47pp、−2.88pp（全期）；FiLM 用 1 + s·tanh(γ) 有界缩放、末层零初始化、缺上下文时精确恒等。</td><td>mHC：B 投影到双随机矩阵（谱范数 ≤1、对乘法封闭），A、C 用 sigmoid 约束为非负有界，门控因子小初值（DSV4 p7–8）。</td><td><span class="badge bB">B</span></td><td>有界、恒等起点的残差混合</td></tr>
+<tr><td>8</td><td>越出凸包的外推：沿"风格解释成分"反向外推 2 倍，全期 +1.16pp，但全期最大回撤也上升约 1.4pp；读出放大 4 倍则 −1.59pp。</td><td>不加约束的 HC "在多层堆叠时频繁出现数值不稳定"（DSV4 p8），mHC 以非扩张约束换取稳定。</td><td><span class="badge bB">B</span></td><td>扩张性与稳定性的取舍</td></tr>
+<tr><td>9</td><td>到处截断：输入 z-score 截断；差分截断 ±1σ 最优，±0.5σ 和 ±2σ 分别 −1.02pp、−0.39pp（后段）；读出坐标截断。</td><td>SwiGLU clamp（线性分量 [−10, 10]、gate 上限 10）；Q/KV 做 RMSNorm，因此不需要 QK-Clip（DSV4 p13, p26）。</td><td><span class="badge bB">B</span></td><td>有界化抑制尾部</td></tr>
+<tr><td>10</td><td>建在冻结 NN 隐状态上的读出有效（隐藏层 → 固定高斯随机投影 → ridge）；联合训练的多期限辅助头无效（三组种子确认中，主指标在多数年度为负）。</td><td>V4.1 移除 MTP，改用在冻结主干上单独训练、梯度不回传主干的 DSpark（V4.1 p13–14）。</td><td><span class="badge bB">B</span></td><td>附加模块与主干解耦</td></tr>
+<tr><td>11</td><td>学生学教师排序比直接学真实标签高约 3.6pp（后段完整配方，同一学生结构）。</td><td>多教师 OPD 取代混合 RL：目标为 Σ w<sub>i</sub>·KL(π<sub>θ</sub>‖π<sub>E<sub>i</sub></sub>)，10 个以上教师（DSV4 p32–33）；V4.1 用 40 个以上异构教师（p32）。</td><td><span class="badge bB">B</span></td><td>教师分布是更干净的监督</td></tr>
+<tr><td>12</td><td>独立训练的学生做参数平均会变差（−0.44pp 和 −0.64pp），而预测层面的平均一直有效。</td><td>DSV4 指出 logits 层面的对齐"规避了传统权重合并或混合 RL 常见的性能退化"（p33）；V4.1 只在同源 RL 运行之间合并参数（p27）。</td><td><span class="badge bA">A</span></td><td>在输出空间集成，同一盆地内才合并参数</td></tr>
+<tr><td>13</td><td>训练类型多样性（1/2 轮 × 不同输入遮蔽率）优于种子多样性，当前最佳方案即来自训练类型组合。</td><td>V4.1 合并"不同脚手架或配置"的 RL 运行；"每个领域的最佳教师可能来自不同的开发阶段"（p27, p32）。</td><td><span class="badge bB">B</span></td><td>配方多样性</td></tr>
+<tr><td>14</td><td>风格强度、差分强度、读出份额等标量旋钮，增益集中在中低强度：风格 0.5 比 1.0 高 0.12pp；差分 η=1 比 1.5 高 0.21pp（后段）。</td><td>推理强度标量 b∈[1, 100] 与指数 token 惩罚；"增益集中在中低预算区间，之后收益递减"（V4.1 p34, p48–50）。</td><td><span class="badge bB">B</span></td><td>增益前置的强度旋钮</td></tr>
+<tr><td>15</td><td>最大的跳升来自信息：更短期限标签带来的快反馈（全期 +1.06pp，区间跨零）、资金流与一致预期读出（后段 +1.26pp）。结构替换（token 注意力、MoE、GRU、双塔、白化）基本无效。</td><td>"在固定而平常的优化流程下，合成数据与环境在规模、多样性和可验证性上的系统改进几乎解释了全部增益"（V4.1 p25）；"后训练没有算法创新"（p6）。</td><td><span class="badge bA">A</span></td><td>数据优先</td></tr>
+<tr><td>16</td><td>候选因子池由两批来源合并去重而成；候选因子先对主分数残差化，只看"扣除主分数后还能解释多少"。</td><td>把低信息增益的模型生成内容视为"隐性重复"过滤（V4.1 p20）。</td><td><span class="badge bB">B</span></td><td>去除隐性冗余</td></tr>
+<tr><td>17</td><td>复杂教师（树 + 十几个 NN + 多层残差）被几十万参数的学生加少数推理期模块反超约 2.0pp（后段）。</td><td>DSV4 自述"保留大量 trick 使架构复杂，未来要提炼到最本质的设计"（p44）；V4.1 去掉 HCA、重叠压缩和 MTP 后整体更好。</td><td><span class="badge bA">A</span></td><td>提炼到本质</td></tr>
+<tr><td>18</td><td>中期复盘指出只看前段、单种子的筛选有偏；之后改为预登记、三组种子、块 bootstrap。</td><td>用覆盖参数量和数据量的 scaling ladder 指导大规模训练决策（V4.1 p20）。</td><td><span class="badge bB">B</span></td><td>小尺度先验证、可预测</td></tr>
+<tr><td>19</td><td>固定求和顺序、逐字节复现、训练与推断使用同一掩码。</td><td>batch-invariant 且确定性的 kernel（DSV4 p18）；训练时模拟分层索引和 bounded replay，FP4 做 QAT（V4.1）。</td><td><span class="badge bB">B</span></td><td>训练—部署一致与可复现</td></tr>
+<tr><td>20</td><td>没有正 IC 或历史不足时回退为池内等权，或回退到父分数。</td><td>attention sink：可学习的 sink logit 允许"什么都不看"（DSV4 p13）。</td><td><span class="badge bC">C</span></td><td>安全的默认出口</td></tr>
+<tr><td>21</td><td>一日差分、五日变化等相对时间特征。</td><td>部分 RoPE 在输出端使用 −i 位置，使贡献依赖相对距离（DSV4 p13）。</td><td><span class="badge bC">C</span></td><td>相对位置</td></tr>
+<tr><td>22</td><td>学习的市值路由不优于固定哈希路由。</td><td>前 3 层 MoE 使用哈希路由（DSV4 p7, p24）。</td><td><span class="badge bC">C</span></td><td>浅层路由无需学习</td></tr>
+</tbody>
+</table>
+
+<h3 id="q1-principles">2.2 七条共同原理</h3>
+
+<h4>原理一：精确的近期局部 + 压缩的远期全局</h4>
+<p>DeepSeek-V4 的三种注意力恰好覆盖三个尺度：SWA 精确地看最近 128 个 token；CSA 把每 4 个 token 压成一个条目，只对 top-k 做注意力；HCA 把每 128 个 token 压成一个条目，做稠密注意力。V4.1 更进一步，认定局部分支才是骨干，压缩的全局分支可以大幅简化（V4.1 p4）。</p>
+<p>选股研究在时间轴上得到了同样的分工，而且是被实验一步步逼出来的。主模型的权重相当于对全部历史的压缩记忆：等权扩张窗口最稳，近期加权或缩短窗口都没有帮助，部分显著更差（一组半衰期加权实验比匹配对照低 1.35pp 且区间不含零；只用近三年训练，全期低 3.9pp）。往前再补更早的数据也没有改善，所以规律不是"历史越多越好"，而是"主模型不要偏向近期"。在线读出相当于精确的局部窗口：约 20 个成熟日优于 60 日和 120 日，这一结论在资金流、一致预期、排名读出等多个读出族上重复出现。截面上，市场上下文把全市场压缩成"近期赢家均值"这一个全局条目。</p>
+<p>为什么局部窗口要短？在非平稳数据里，主模型尚未解释的残差结构漂移很快：窗口越长，估计方差越小，但偏差越大，约 20 日的 ridge 恰好落在这个平衡点附近。两边的区别在于存储位置：选股研究的远期信息存在权重里（参数记忆），近期信息存在闭式读出里（非参数）；DeepSeek 的两者都存在 KV 里。这个区别是第 3、4 节若干迁移建议的出发点。</p>
+<figure>
+<div class="frame"><svg viewBox="0 0 960 392" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="DeepSeek-V4 与选股研究的双时间尺度结构对照" style="width:100%;height:auto;font-family:inherit">
+<defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#f3f4f6"/><line x1="0" y1="0" x2="0" y2="6" stroke="#9ca3af" stroke-width="2"/></pattern></defs>
+<rect width="960" height="392" fill="#fffdf8"/>
+<text x="20" y="26" font-size="14" font-weight="700" fill="#1e3a8a">(a) DeepSeek-V4：同一条 token 序列上的三种尺度</text>
+<text x="20" y="59" font-size="12.5" fill="#1f2328">CSA（m=4，选 top-k）</text>
+<text x="20" y="89" font-size="12.5" fill="#1f2328">HCA（m′=128，稠密）</text>
+<text x="20" y="119" font-size="12.5" fill="#1f2328">SWA（n_win=128，精确）</text>
+<rect x="220" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="230" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="240" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="250" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="260" y="46" width="8.6" height="18" fill="#1d4ed8"/>
+<rect x="270" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="280" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="290" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="300" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="310" y="46" width="8.6" height="18" fill="#1d4ed8"/>
+<rect x="320" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="330" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="340" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="350" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="360" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="370" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="380" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="390" y="46" width="8.6" height="18" fill="#1d4ed8"/>
+<rect x="400" y="46" width="8.6" height="18" fill="#1d4ed8"/>
+<rect x="410" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="420" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="430" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="440" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="450" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="460" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="470" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="480" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="490" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="500" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="510" y="46" width="8.6" height="18" fill="#1d4ed8"/>
+<rect x="520" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="530" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="540" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="550" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="560" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="570" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="580" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="590" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="600" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="610" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="620" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="630" y="46" width="8.6" height="18" fill="#1d4ed8"/>
+<rect x="640" y="46" width="8.6" height="18" fill="#1d4ed8"/>
+<rect x="650" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="660" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="670" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="680" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="690" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="700" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="710" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="720" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="730" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="740" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="750" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="760" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="770" y="46" width="8.6" height="18" fill="#1d4ed8"/>
+<rect x="780" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="790" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="800" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="810" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="820" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="830" y="46" width="8.6" height="18" fill="#1d4ed8"/>
+<rect x="840" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="850" y="46" width="8.6" height="18" fill="#bfdbfe"/>
+<rect x="220" y="76" width="62" height="18" fill="#e0e7ff" stroke="#a5b4fc"/>
+<rect x="284" y="76" width="62" height="18" fill="#e0e7ff" stroke="#a5b4fc"/>
+<rect x="348" y="76" width="62" height="18" fill="#e0e7ff" stroke="#a5b4fc"/>
+<rect x="412" y="76" width="62" height="18" fill="#e0e7ff" stroke="#a5b4fc"/>
+<rect x="476" y="76" width="62" height="18" fill="#e0e7ff" stroke="#a5b4fc"/>
+<rect x="540" y="76" width="62" height="18" fill="#e0e7ff" stroke="#a5b4fc"/>
+<rect x="604" y="76" width="62" height="18" fill="#e0e7ff" stroke="#a5b4fc"/>
+<rect x="668" y="76" width="62" height="18" fill="#e0e7ff" stroke="#a5b4fc"/>
+<rect x="732" y="76" width="62" height="18" fill="#e0e7ff" stroke="#a5b4fc"/>
+<rect x="796" y="76" width="62" height="18" fill="#e0e7ff" stroke="#a5b4fc"/>
+<line x1="220" y1="115" x2="860" y2="115" stroke="#d1d5db" stroke-dasharray="4 4"/>
+<rect x="860" y="106" width="40" height="18" fill="#f59e0b"/>
+<line x1="900" y1="38" x2="900" y2="132" stroke="#111827" stroke-width="1.5"/>
+<text x="900" y="146" font-size="11.5" text-anchor="end" fill="#111827">当前 query</text>
+<text x="220" y="146" font-size="11.5" fill="#6b7280">第 1 个 token</text>
+<text x="220" y="166" font-size="12" fill="#374151">深色块是 lightning indexer 选中的 top-k 压缩条目（Flash 512 / Pro 1024）。</text>
+<text x="220" y="184" font-size="12" fill="#374151">V4.1 把这一结构概括为“SWA 局部骨干 + 压缩全局上下文”（V4.1 p4）。</text>
+<text x="20" y="216" font-size="14" font-weight="700" fill="#9a3412">(b) 选股研究：同一条交易日轴上的三种尺度</text>
+<text x="20" y="247" font-size="12.5" fill="#1f2328">主模型权重（全历史）</text>
+<text x="20" y="277" font-size="12.5" fill="#1f2328">在线读出（短窗）</text>
+<text x="20" y="307" font-size="12.5" fill="#1f2328">市场上下文</text>
+<rect x="220" y="234" width="580" height="18" fill="#fed7aa"/>
+<text x="230" y="247" font-size="12" fill="#7c2d12">全部成熟样本、等权；年度训练 + 半年增量（近期加权、缩短窗口都没有帮助）</text>
+<rect x="744" y="264" width="56" height="18" fill="#ea580c"/>
+<text x="736" y="277" font-size="12" text-anchor="end" fill="#7c2d12">闭式 ridge，固定小幅度；更长的窗口更差 →</text>
+<rect x="800" y="230" width="46" height="56" fill="url(#hatch)"/>
+<text x="823" y="225" font-size="11" text-anchor="middle" fill="#6b7280">成熟间隔</text>
+<rect x="846" y="294" width="18" height="18" fill="#7c2d12"/>
+<text x="838" y="307" font-size="12" text-anchor="end" fill="#7c2d12">前一日截面按近期收益取 Top-k、求特征均值 →</text>
+<line x1="900" y1="224" x2="900" y2="320" stroke="#111827" stroke-width="1.5"/>
+<text x="900" y="334" font-size="11.5" text-anchor="end" fill="#111827">决策日 D</text>
+<text x="220" y="334" font-size="11.5" fill="#6b7280">历史起点</text>
+<text x="220" y="360" font-size="12" fill="#374151">h 日期限的标签要 h+1 个交易日才成熟，读出窗口与决策日之间必然隔着一段“不可见”的区间，对应语言模型的因果约束。</text>
+<text x="220" y="380" font-size="12" fill="#374151">区别：选股研究的远期信息存在权重里（参数记忆），近期信息存在闭式读出里；DeepSeek 的两者都存在 KV 里。</text>
+</svg></div>
+<figcaption>图 3｜双时间尺度：DeepSeek-V4 的 token 轴与选股研究的交易日轴。两者都用"精确短窗 + 压缩全局"，并都受因果约束（选股研究中是标签的成熟间隔）。</figcaption>
+</figure>
+
+<h4>原理二：打分 → 选择 → 复用</h4>
+<p>CSA 是两段式的：先用廉价的 lightning indexer（低秩、ReLU、FP4）给所有压缩条目打分，再只对 top-k 做昂贵的核心注意力。V4.1 再加一层：首个 Full 层按块的最大分数建立候选池，后续 Reindex 层只在池内重新打分，Reuse 层直接沿用 top-k（p10–12）。</p>
+<p>选股研究的动态增强是同一模式在因子空间的版本：打分函数是约 20 个成熟日的平均残差 IC，"只保留正 IC"相当于 ReLU，top-k 从精选池和全池分别选取，候选池是离线筛出的精选子集。市场上下文是同一模式在股票维度上的版本：按近期收益打分、选 Top-k、均值聚合，相当于权重均匀的稀疏注意力。</p>
+<p>两边有一处值得注意的分歧。DeepSeek 选 top-k 是算力约束下的近似；选股研究在低样本条件下（每个打分只依赖约 20 个截面）发现硬 top-k 本身就不是好的统计估计：把"正 IC Top-k 加权"改为对整个精选池做有符号 ridge，全期主指标 +0.41pp；沿这条稠密 ridge 路线再调整修正强度、改为直接学习短期限收益，累计 +2.18pp。对语言模型的含义是：当 indexer 的打分噪声很大时（训练早期、长尾 query），硬 top-k 的损失可能不止于算力近似；V4.1 的"候选池放宽召回、池内精细重打分"正好是两者之间的折中。</p>
+<p>复用方面，选股研究的多个读出头共享同一个 Gram 矩阵，缓存只存与主分数无关的一阶段结果，而与主分数相关的候选残差、滚动 IC 必须重算。这与 CSA2"共享 main KV 和 indexer K（key 侧），每层自己计算 indexer Q（query 侧）"是同一个工程原则：缓存与查询无关的部分，重算与查询相关的部分。</p>
+
+<h4>原理三：受约束的残差混合，以及什么时候值得越界</h4>
+<p>mHC 把残差流的混合矩阵限制在双随机矩阵（Birkhoff 多面体）上：谱范数不超过 1，并且对乘法封闭，所以无论堆多少层都不会放大信号。不加约束的 HC 在多层堆叠时频繁出现数值不稳定（DSV4 p8）。</p>
+<p>选股研究的残差链大部分环节都是凸组合（例如两个成分按 0.25 / 0.75 加权）或 0.1 std 级别的小幅修正。学生的 FiLM 把缩放限制在 [1−s, 1+s]、末层零初始化、没有上下文时精确恒等，与 mHC 的"sigmoid 有界 + 小初值门控"是同一种设计。</p>
+<p>选股研究的证据比"处处非扩张"多了一层：前沿上有几次关键跳升恰恰来自受控的越界。一次是排名头的 2 倍外推（后段 +1.15pp），一次是沿风格解释成分的反向外推（全期 +1.16pp），两者都落在凸包外；差分外推又在后来的配方里贡献了约 2.3pp（η 从 0 到 1）。这些增益来自不同基座，不能直接相加。越界是有代价的：风格外推使全期最大回撤上升约 1.4pp；另一次组合的辅指标和 IC 在 4/4 组中提升，但回撤全部上升；越界过头则直接变差（读出 ×4、修正强度 0.8、修正范围收得过窄）。这提示一种更细的设计：内部混合保持非扩张以保证深层稳定，只在少数位置（通常是输出端）允许有界的扩张，并用逐坐标截断限制单点影响。第 3、4 节的"有界对比外推"和"末端截断割线外推"都由此而来。</p>
+<figure>
+<div class="frame"><svg viewBox="0 0 952 410" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="有界与适度：八组单旋钮实验（相对值）" style="width:100%;height:auto;font-family:inherit">
+<rect width="952" height="410" fill="#fffdf8"/>
+<rect x="8" y="8" width="224" height="176" rx="8" fill="#ffffff" stroke="#e5e1d6"/>
+<text x="20" y="28" font-size="12.5" font-weight="600" fill="#1f2328">差分外推强度 η</text>
+<text x="220" y="28" font-size="10.5" text-anchor="end" fill="#6b7280">后段主指标</text>
+<rect x="31.0" y="126.1" width="44" height="33.9" fill="#cbd5e1" rx="3"/>
+<text x="53.0" y="121.1" font-size="11" text-anchor="middle" fill="#1f2328">-2.30</text>
+<text x="53.0" y="175.0" font-size="11" text-anchor="middle" fill="#374151">η=0</text>
+<rect x="98.0" y="102.7" width="44" height="57.3" fill="#cbd5e1" rx="3"/>
+<text x="120.0" y="97.7" font-size="11" text-anchor="middle" fill="#1f2328">-1.47</text>
+<text x="120.0" y="175.0" font-size="11" text-anchor="middle" fill="#374151">η=0.5</text>
+<rect x="165.0" y="61.3" width="44" height="98.7" fill="#9a3412" rx="3"/>
+<text x="187.0" y="56.3" font-size="11" text-anchor="middle" fill="#1f2328">最优</text>
+<text x="187.0" y="175.0" font-size="11" text-anchor="middle" fill="#374151">η=1</text>
+<line x1="16" y1="160" x2="224" y2="160" stroke="#9ca3af"/>
+<rect x="244" y="8" width="224" height="176" rx="8" fill="#ffffff" stroke="#e5e1d6"/>
+<text x="256" y="28" font-size="12.5" font-weight="600" fill="#1f2328">差分截断幅度</text>
+<text x="456" y="28" font-size="10.5" text-anchor="end" fill="#6b7280">后段主指标</text>
+<rect x="267.0" y="109.6" width="44" height="50.4" fill="#cbd5e1" rx="3"/>
+<text x="289.0" y="104.6" font-size="11" text-anchor="middle" fill="#1f2328">-1.02</text>
+<text x="289.0" y="175.0" font-size="11" text-anchor="middle" fill="#374151">±0.5σ</text>
+<rect x="334.0" y="66.8" width="44" height="93.2" fill="#9a3412" rx="3"/>
+<text x="356.0" y="61.8" font-size="11" text-anchor="middle" fill="#1f2328">最优</text>
+<text x="356.0" y="175.0" font-size="11" text-anchor="middle" fill="#374151">±1σ</text>
+<rect x="401.0" y="83.1" width="44" height="76.9" fill="#cbd5e1" rx="3"/>
+<text x="423.0" y="78.1" font-size="11" text-anchor="middle" fill="#1f2328">-0.39</text>
+<text x="423.0" y="175.0" font-size="11" text-anchor="middle" fill="#374151">±2σ</text>
+<line x1="252" y1="160" x2="460" y2="160" stroke="#9ca3af"/>
+<rect x="480" y="8" width="224" height="176" rx="8" fill="#ffffff" stroke="#e5e1d6"/>
+<text x="492" y="28" font-size="12.5" font-weight="600" fill="#1f2328">差分符号</text>
+<text x="692" y="28" font-size="10.5" text-anchor="end" fill="#6b7280">后段主指标</text>
+<rect x="503.0" y="87.8" width="44" height="72.2" fill="#cbd5e1" rx="3"/>
+<text x="525.0" y="82.8" font-size="11" text-anchor="middle" fill="#1f2328">-0.90</text>
+<text x="525.0" y="175.0" font-size="11" text-anchor="middle" fill="#374151">只加正向</text>
+<rect x="570.0" y="125.2" width="44" height="34.8" fill="#cbd5e1" rx="3"/>
+<text x="592.0" y="120.2" font-size="11" text-anchor="middle" fill="#1f2328">-2.19</text>
+<text x="592.0" y="175.0" font-size="11" text-anchor="middle" fill="#374151">只加负向</text>
+<rect x="637.0" y="61.6" width="44" height="98.4" fill="#9a3412" rx="3"/>
+<text x="659.0" y="56.6" font-size="11" text-anchor="middle" fill="#1f2328">最优</text>
+<text x="659.0" y="175.0" font-size="11" text-anchor="middle" fill="#374151">双向</text>
+<line x1="488" y1="160" x2="696" y2="160" stroke="#9ca3af"/>
+<rect x="716" y="8" width="224" height="176" rx="8" fill="#ffffff" stroke="#e5e1d6"/>
+<text x="728" y="28" font-size="12.5" font-weight="600" fill="#1f2328">差分跨度</text>
+<text x="928" y="28" font-size="10.5" text-anchor="end" fill="#6b7280">后段主指标</text>
+<rect x="739.0" y="64.0" width="44" height="96.0" fill="#9a3412" rx="3"/>
+<text x="761.0" y="59.0" font-size="11" text-anchor="middle" fill="#1f2328">最优</text>
+<text x="761.0" y="175.0" font-size="11" text-anchor="middle" fill="#374151">1 日</text>
+<rect x="806.0" y="90.3" width="44" height="69.7" fill="#cbd5e1" rx="3"/>
+<text x="828.0" y="85.3" font-size="11" text-anchor="middle" fill="#1f2328">-0.75</text>
+<text x="828.0" y="175.0" font-size="11" text-anchor="middle" fill="#374151">2 日均值</text>
+<rect x="873.0" y="118.1" width="44" height="41.9" fill="#cbd5e1" rx="3"/>
+<text x="895.0" y="113.1" font-size="11" text-anchor="middle" fill="#1f2328">-1.55</text>
+<text x="895.0" y="175.0" font-size="11" text-anchor="middle" fill="#374151">5 日均值</text>
+<line x1="724" y1="160" x2="932" y2="160" stroke="#9ca3af"/>
+<rect x="8" y="198" width="224" height="176" rx="8" fill="#ffffff" stroke="#e5e1d6"/>
+<text x="20" y="218" font-size="12.5" font-weight="600" fill="#1f2328">读出幅度</text>
+<text x="220" y="218" font-size="10.5" text-anchor="end" fill="#6b7280">全期主指标</text>
+<rect x="31.0" y="249.8" width="44" height="100.2" fill="#9a3412" rx="3"/>
+<text x="53.0" y="244.8" font-size="11" text-anchor="middle" fill="#1f2328">最优</text>
+<text x="53.0" y="365.0" font-size="11" text-anchor="middle" fill="#374151">0.1 std</text>
+<rect x="98.0" y="261.4" width="44" height="88.6" fill="#cbd5e1" rx="3"/>
+<text x="120.0" y="256.4" font-size="11" text-anchor="middle" fill="#1f2328">-0.47</text>
+<text x="120.0" y="365.0" font-size="11" text-anchor="middle" fill="#374151">0.25 std</text>
+<rect x="165.0" y="320.5" width="44" height="29.5" fill="#cbd5e1" rx="3"/>
+<text x="187.0" y="315.5" font-size="11" text-anchor="middle" fill="#1f2328">-2.88</text>
+<text x="187.0" y="365.0" font-size="11" text-anchor="middle" fill="#374151">0.5 std</text>
+<line x1="16" y1="350" x2="224" y2="350" stroke="#9ca3af"/>
+<rect x="244" y="198" width="224" height="176" rx="8" fill="#ffffff" stroke="#e5e1d6"/>
+<text x="256" y="218" font-size="12.5" font-weight="600" fill="#1f2328">读出加入量倍数</text>
+<text x="456" y="218" font-size="10.5" text-anchor="end" fill="#6b7280">全期主指标</text>
+<rect x="267.0" y="253.8" width="44" height="96.2" fill="#9a3412" rx="3"/>
+<text x="289.0" y="248.8" font-size="11" text-anchor="middle" fill="#1f2328">最优</text>
+<text x="289.0" y="365.0" font-size="11" text-anchor="middle" fill="#374151">×1</text>
+<rect x="334.0" y="271.0" width="44" height="79.0" fill="#cbd5e1" rx="3"/>
+<text x="356.0" y="266.0" font-size="11" text-anchor="middle" fill="#1f2328">-0.50</text>
+<text x="356.0" y="365.0" font-size="11" text-anchor="middle" fill="#374151">×2</text>
+<rect x="401.0" y="308.6" width="44" height="41.4" fill="#cbd5e1" rx="3"/>
+<text x="423.0" y="303.6" font-size="11" text-anchor="middle" fill="#1f2328">-1.59</text>
+<text x="423.0" y="365.0" font-size="11" text-anchor="middle" fill="#374151">×4</text>
+<line x1="252" y1="350" x2="460" y2="350" stroke="#9ca3af"/>
+<rect x="480" y="198" width="224" height="176" rx="8" fill="#ffffff" stroke="#e5e1d6"/>
+<text x="492" y="218" font-size="12.5" font-weight="600" fill="#1f2328">头部修正强度</text>
+<text x="692" y="218" font-size="10.5" text-anchor="end" fill="#6b7280">全期主指标</text>
+<rect x="503.0" y="249.5" width="44" height="100.5" fill="#9a3412" rx="3"/>
+<text x="525.0" y="244.5" font-size="11" text-anchor="middle" fill="#1f2328">最优</text>
+<text x="525.0" y="365.0" font-size="11" text-anchor="middle" fill="#374151">0.4</text>
+<rect x="570.0" y="283.6" width="44" height="66.4" fill="#cbd5e1" rx="3"/>
+<text x="592.0" y="278.6" font-size="11" text-anchor="middle" fill="#1f2328">-1.43</text>
+<text x="592.0" y="365.0" font-size="11" text-anchor="middle" fill="#374151">0.6</text>
+<rect x="637.0" y="321.4" width="44" height="28.6" fill="#cbd5e1" rx="3"/>
+<text x="659.0" y="316.4" font-size="11" text-anchor="middle" fill="#1f2328">-3.02</text>
+<text x="659.0" y="365.0" font-size="11" text-anchor="middle" fill="#374151">0.8</text>
+<line x1="488" y1="350" x2="696" y2="350" stroke="#9ca3af"/>
+<rect x="716" y="198" width="224" height="176" rx="8" fill="#ffffff" stroke="#e5e1d6"/>
+<text x="728" y="218" font-size="12.5" font-weight="600" fill="#1f2328">学生训练目标</text>
+<text x="928" y="218" font-size="10.5" text-anchor="end" fill="#6b7280">后段主指标</text>
+<rect x="739.0" y="325.8" width="44" height="24.2" fill="#cbd5e1" rx="3"/>
+<text x="761.0" y="320.8" font-size="11" text-anchor="middle" fill="#1f2328">-3.84</text>
+<text x="761.0" y="365.0" font-size="11" text-anchor="middle" fill="#374151">真实 5 日</text>
+<rect x="806.0" y="320.9" width="44" height="29.1" fill="#cbd5e1" rx="3"/>
+<text x="828.0" y="315.9" font-size="11" text-anchor="middle" fill="#1f2328">-3.60</text>
+<text x="828.0" y="365.0" font-size="11" text-anchor="middle" fill="#374151">真实 1 日</text>
+<rect x="873.0" y="248.1" width="44" height="101.9" fill="#9a3412" rx="3"/>
+<text x="895.0" y="243.1" font-size="11" text-anchor="middle" fill="#1f2328">最优</text>
+<text x="895.0" y="365.0" font-size="11" text-anchor="middle" fill="#374151">教师排序</text>
+<line x1="724" y1="350" x2="932" y2="350" stroke="#9ca3af"/>
+<text x="8" y="402" font-size="11" fill="#6b7280">柱上数字为相对本组最优的差值（pp）；柱高只用于组内比较。</text>
+</svg></div>
+<figcaption>图 4｜"有界与适度"：八组单旋钮实验。截断幅度存在内部最优（±1σ）；读出幅度、加入量倍数和修正强度都是越大越差，最优点在测试范围的小端；差分强度从 0 到 1 单调上升，但在另一基座上 1.5 已低于 1（−0.21pp）；只放大正向变化明显优于只放大负向；最后一组显示学生学教师排序明显优于学真实标签。</figcaption>
+</figure>
+
+<h4>原理四：有界化是对重尾分布的稳健估计</h4>
+<p>DSV4 承认 Anticipatory Routing 与 SwiGLU clamp "有效，但原理尚不清楚"（p44）。选股研究提供了一个可检验的解释：在重尾、低信噪比的数据上，前向截断相当于给每个坐标的影响设一个上界（类似 Huber 损失的影响函数），用少量偏差换取较大的方差下降。证据是图 4 中截断幅度有清晰的内部最优点：±1σ 最好，±0.5σ 截掉了信号，±2σ 放进了噪声；读出幅度、修正强度和读出倍数则是越大越差，最优点落在测试范围的小端。先把每个成分映射到有界分布（高斯秩、百分位）再混合，也带来小幅增益。对语言模型的可检验推论是：clamp 的收益应与该层激活分布的尾部厚度正相关；在训练中监测激活峰度，可以预测哪些层需要 clamp，以及阈值大约在几个标准差。</p>
+
+<h4>原理五：附加模块与主干解耦</h4>
+<p>V4.1 用 DSpark 取代 MTP：草稿模块在冻结的主干上单独训练，后训练阶段继续训练但梯度不回传主干（p13–14）。选股研究的经历一致：所有作为训练辅助损失的多期限头、多深度头都没有帮助，而建在冻结隐状态上的读出是第二段的增长引擎。一个合理的解释是：联合辅助损失会与主目标争夺有限的表示容量和优化步数（该项目的 NN 每年只训练一轮，约 180 步），冻结主干上的附加模块则只利用表示，不干扰主干。</p>
+
+<h4>原理六：蒸馏、多教师与合并</h4>
+<p>DSV4 用多教师 OPD 合并各领域专家，V4.1 扩展到 40 多个异构教师，并承认"每个领域的最佳教师可能来自不同的开发阶段"（p32）。选股研究的第三段是同一件事的低信噪比版本：复杂教师提供去噪的目标，学生学教师排序比学真实标签高约 3.6pp。</p>
+<p>选股研究还提供了一个两份报告都没有讨论的反面证据：教师的提升并不会自动传给学生。有一个教师比原教师高 0.83pp（区间跨零），由它蒸馏的学生裸模型只多 0.09–0.16pp，完整配方反而低 0.08–0.55pp；学生对教师排序的保留度（RankIC）只有 0.82–0.83。用学生自己的历史预测再蒸馏，则比匹配的教师对照低 0.70–1.75pp。</p>
+<p>合并方面，DSV4 明确说 logits 层面的对齐规避了权重合并的退化（p33），V4.1 只在同源 RL 运行之间合并参数（p27）。选股研究的数据与之吻合：独立训练的学生做参数平均变差，同一轨迹的多轮或 EMA 参数平均基本无变化，预测层面的集成则一直有效。</p>
+
+<h4>原理七：数据优先与提炼到本质</h4>
+<p>V4.1 的后训练"没有算法创新"，增益"几乎全部"来自数据与环境（p6, p25）。选股研究的前沿也主要由信息推动：短期限标签的快反馈、资金流与一致预期读出、市场上下文等。相反，大量结构实验都没有带来稳定改进：token 注意力（全期 −0.50pp）、截面 inducing-token 注意力（两个年度主指标均更低）、软路由 MoE（两个年度均未超过基线）、长窗口因果 CNN（与反序对照几乎相同）、ZCA 白化、双塔、同日 MixUp、梯度投影。</p>
+<p>"提炼到本质"在选股研究里已经发生过一次：复杂教师被一个几十万参数的学生加四个推理期模块反超。这与 V4.1 删去 HCA、重叠压缩和 MTP 之后整体更好的经历一致。</p>
+
+<h3 id="q1-limits">2.3 类比在哪里失效</h3>
+<ul>
+  <li><b>目标不同。</b>LLM 优化下一个 token 的似然，训练目标与评价大体一致；选股研究的训练用中性化 z-score 收益的加权 MSE，评价却是相对基准指数的头部表现，两者错配（中期复盘的首要结论）。</li>
+  <li><b>信噪比与样本量。</b>选股研究的日截面 IC 只有百分之几，每年约 180 个更新步；LLM 有 30T 以上 token。很多结构收益依赖大数据才能显现，在低信噪比任务中可能被方差淹没。</li>
+  <li><b>非平稳性。</b>选股研究的"局部窗口"是在追踪漂移；LLM 的局部窗口主要反映语言结构的局部性，二者的最优窗口未必有相同的成因。</li>
+  <li><b>动机。</b>DeepSeek 的多数结构是为算力和显存服务的近似（top-k、压缩、复用、FP4）；选股研究的对应物是为统计效率服务的估计器。同一种形式背后的最优参数可能完全不同。</li>
+  <li><b>评价暴露。</b>选股研究的评价年度已被反复使用，任何选择都含过拟合成分；DeepSeek 的数字来自单次大规模训练，外部无法复核。</li>
+</ul>
+</section>
+
+<section id="q2">
+<h2>3. 问题二：选股研究对未来基础模型研发可能有效的新 trick / insight</h2>
+<p>这一节只收录选股研究有直接实证、而两份报告没有出现或只覆盖了一半的做法。每条给出选股研究的证据、机制解释、可以在语言模型上做的最小实验和主要风险。"新颖度"是相对两份报告与常见公开做法的主观判断。需要强调：这些证据来自低信噪比、强非平稳、样本量很小的任务，在 LLM 上是否成立必须重新验证。</p>
+
+<h3 id="q2-cards">3.1 十条可迁移的做法</h3>
+
+<div class="card">
+<h4><span class="tag q2">T1</span>成熟窗口闭式岭读出：一种短窗 fast weights</h4>
+<div class="meta">新颖度：中 ｜ 对应理论：Mesa 层、TTT-linear、DeltaNet 等"在上下文中求解最小二乘"的模块</div>
+<p><b>做法。</b>把冻结主干的隐状态随机投影到 64 维；在最近 W 个"标签已成熟"的样本上闭式求解 ridge（λ ∝ tr(G)/d，G 为窗口内 Gram 矩阵）；把读出以固定的小幅度加到主输出上。</p>
+<p><b>选股研究证据。</b>窗口约 20 日优于 60 日和 120 日（多个读出族重复出现，差值 +0.8 至 +1.1pp）；幅度 0.1 std 优于 0.25 和 0.5 std（−0.47pp、−2.88pp）；基于近期误差估计的自适应可靠性收缩反而更差（−0.64pp）；浅树读出与 ridge 读出相当（相差 0.07pp）；精确近邻读出与 ridge 基本持平（+0.01pp，区间跨零，且有一个种子退化）；多个读出共享同一 Gram 并可叠加。</p>
+<p><b>机制。</b>ridge 读出就是窗口内的最优线性 fast weights。选股研究在此基础上补充了三个先验：窗口要短（跟踪漂移）；幅度要小且固定（约 20 个截面不足以可靠估计自适应收缩系数）；λ 与 Gram 迹成比例（尺度无关）。</p>
+<p><b>LLM 上的最小实验。</b>在冻结的 LM 上为流式或个性化任务加一个 ridge 读出头，例如在代码库持续任务中以"测试已通过"的 token 作为成熟标签。比较 W 取短、中、长三档，固定 α 与自适应 α 两种。预测：在非平稳流上，短窗加小的固定 α 胜出。进一步可以在小模型上把滑窗 ridge 作为 SWA 分支的替代或补充做对比。</p>
+<p><b>风险。</b>语言的局部依赖不一定是"漂移"性质，短窗优势可能不成立；读出需要可靠的成熟标签，很多场景没有。</p>
+</div>
+
+<div class="card">
+<h4><span class="tag q2">T2</span>有界对比外推：逐坐标截断、只取正向、只用最新一步</h4>
+<div class="meta">新颖度：中高 ｜ 相关方法：CFG、对比解码（DoLa、Contrastive Decoding）、ExPO 权重外推、激活 steering</div>
+<p><b>做法。</b>最终分数 = 当前分数 + η·clip(当前分数 − 上一期分数, ±c)，c 以截面标准差为单位。</p>
+<p><b>选股研究证据（后段主指标）。</b>η 取 0 / 0.5 / 1 时，相对 η=0 分别为 0 / +0.83 / +2.30pp；截断 ±1σ 最优，±0.5σ 和 ±2σ 分别 −1.02pp、−0.39pp；只加正向部分比双向低 0.90pp，只加负向部分低 2.19pp；1 日差分最优，2 日均值和 5 日均值分别低 0.75pp、1.55pp。沿"风格解释成分"方向的外推也有效，但推高了回撤。</p>
+<p><b>与已有方法的关系。</b>CFG、对比解码、ExPO、steering 都是"沿某个对比方向外推"。选股研究补充了三个约束，在公开做法中少见：逐坐标截断（以该位置差值的标准差为单位）；不对称（只放大正向变化的那部分贡献最大）；只用最新一步差分，不做平滑。</p>
+<p><b>LLM 上的最小实验。</b>（a）对 CFG 或对比解码的 logit 差做逐 token 截断，比较截断与不截断在准确率和尾部失败率（重复、跑题、幻觉）上的差别；（b）ExPO 式权重外推加逐元素截断；（c）在循环模型的迭代维度上做 DoLa 式对比（第 K 次与第 K−1 次迭代），见第 4 节 L1。</p>
+<p><b>风险。</b>选股研究中差分外推的收益可能部分来自特定市场的短期动量结构，不一定是通用规律；外推会推高尾部风险，评价时必须同时看均值和尾部。</p>
+</div>
+
+<div class="card">
+<h4><span class="tag q2">T3</span>先校准，再混合</h4>
+<div class="meta">新颖度：低到中 ｜ 工程上常见，但在多教师 OPD 中少有系统消融</div>
+<p><b>做法。</b>混合异构成分之前，先把每个成分映射为截面高斯秩或百分位 z，再按固定权重相加。</p>
+<p><b>选股研究证据。</b>多个 NN 种子先做百分位聚合、树模型改为正态秩之后，后段主指标 +0.10pp；全链路统一做截面标准化加截断。幅度不大，但在后续配方中一直保留。</p>
+<p><b>LLM 迁移。</b>V4.1 的 OPD 有 40 多个架构各异的教师（p32），不同教师的 logit 尺度和有效温度差别很大；多奖励模型混合也有同样问题。建议在混合之前按 prompt 做温度校准或秩变换，并把"是否校准"作为显式消融。</p>
+</div>
+
+<div class="card">
+<h4><span class="tag q2">T4</span>配方多样性优于种子多样性；参数平均需要同一个盆地</h4>
+<div class="meta">新颖度：中 ｜ 与 V4.1"合并不同脚手架或配置的 RL 运行"相容</div>
+<p><b>选股研究证据。</b>当前最佳方案来自训练类型（1 轮或 2 轮 × 不同输入遮蔽率）的组合；九个 NN 的不同类型组合结果彼此相差不到 0.02pp，十分稳定；独立训练的学生做参数平均变差（−0.44pp、−0.64pp），同一轨迹的多轮 EMA 平均没有增益。</p>
+<p><b>LLM 迁移。</b>构建集成、教师池或做模型合并时，用配方差异（数据顺序、掩码率、训练轮数、学习率日程）制造多样性，比单纯换种子更有效；参数合并只在共享初始化、差异较小的模型之间做，否则在输出空间集成。DSV4 也指出 logits 对齐能规避权重合并的退化（p33）。</p>
+</div>
+
+<div class="card">
+<h4><span class="tag q2">T5</span>蒸馏的可迁移性规律</h4>
+<div class="meta">新颖度：中高 ｜ 两份报告都假设"更强的教师带来更强的学生"，没有讨论迁移失败的条件</div>
+<p><b>选股研究证据。</b>学教师排序比学真实标签高约 3.6pp；但一个教师 +0.83pp 的提升只传过来约 0.1pp（裸学生），完整配方甚至下降；学生对教师排序的保留度只有 0.82–0.83；十几种教师变体的学生都落在约 0.25pp 的窄带内；用学生自己的预测再蒸馏会变差（−0.70 至 −1.75pp）。</p>
+<p><b>规律表述。</b>当学生对教师的模仿误差大于教师之间的差异时，升级教师对学生几乎无效。此时应该投资于提高模仿保真度（目标形式、容量、训练轮次），而不是寻找更强的教师；选择教师应看学生收益，而不是教师自身的分数。V4.1 的"每个领域的最佳教师可能来自更早的开发阶段"（p32）与这一规律相容。</p>
+<p><b>LLM 上的最小实验。</b>在多教师 OPD 中，逐领域记录"迁移比"（学生增益除以教师增益）和"保真度"（学生与教师分布的 KL 或 top-k 一致率），用迁移比而不是教师基准分来分配教师权重 w<sub>i</sub>；当某领域保真度低时，先改目标形式或增加学生在该领域的训练量，再考虑换教师。</p>
+</div>
+
+<div class="card">
+<h4><span class="tag q2">T6</span>主损失保持全分布，头部只做辅助约束</h4>
+<div class="meta">新颖度：中 ｜ 与 DSV4 坚持全词表 OPD 的理由一致</div>
+<p><b>选股研究证据。</b>直接以头部为主目标会灾难性失败：把主损失换成"是否进入前 10%"的二分类，相对同结构 MSE 基座，辅指标 −27.98pp、主指标 −7.26pp；换成上侧 expectile，辅指标 −14.21pp、主指标 −4.02pp；只用头部样本拟合读出也略差（−0.25pp）。反过来，在 MSE 主损失上加 0.1 倍"软 top10% 的风险暴露惩罚"，全期主指标 +2.07pp，两个主区间下界为正。</p>
+<p><b>对应。</b>DSV4 选择全词表 OPD，是因为逐 token 的 KL 估计"方差高、经常导致训练不稳定"（p33）。两边的共同点是：稀疏的、只看头部的监督信号方差太大，主损失必须是稠密的。</p>
+<p><b>LLM 迁移。</b>不要用 pass@1 或 top-1 这类稀疏目标替换全分布似然或 KL；如果想约束高概率区域的行为（例如冗长、重复、迎合），用小权重、可导的"头部暴露惩罚"叠加在全分布主损失上。</p>
+</div>
+
+<div class="card">
+<h4><span class="tag q2">T7</span>双时间尺度的持续学习与更新节奏</h4>
+<div class="meta">新颖度：中 ｜ DSV4 把 online learning 列为下一代范式（p4, p44）</div>
+<p><b>选股研究证据。</b>主模型用全部历史、不偏向近期（第 2 节原理一）；年中用新成熟样本以很小的学习率增量更新一次，使裸学生后段 +2.57pp；但季度更新没有比半年更新更好（完整配方全期 −0.22pp 和 −0.44pp），第三轮训练也没有增益。</p>
+<p><b>LLM 迁移。</b>持续预训练和在线学习中，主干不宜过度偏向近期数据，近期适应交给快模块；增量更新存在最优节奏，过于频繁会把噪声和漂移带进主干。可以把"更新节奏"当作一个需要扫描的超参数，而不是默认越频繁越好。</p>
+</div>
+
+<div class="card">
+<h4><span class="tag q2">T8</span>延迟反馈的成熟度纪律</h4>
+<div class="meta">新颖度：中 ｜ 在金融里是常识，在 LLM 在线学习中很少系统化</div>
+<p><b>选股研究做法。</b>信号先进入待结算队列，只有标签终点严格早于当前决策日的样本才能进入任何统计；更短期限的标签成熟更快，为自适应模块提供更新鲜的反馈（全期 +1.06pp，区间 [−0.31, 2.48] 跨零）。日期不连续时用有界回放重建状态。</p>
+<p><b>LLM 迁移。</b>长程 agent 任务、用户反馈、延迟验证的代码任务都存在"标签成熟"问题。在线学习系统应显式维护成熟队列，评价时严格按成熟边界切分，避免用尚未可观测的结果训练；可以用成熟快的代理信号驱动快模块，用成熟慢的真实信号校正主干。</p>
+</div>
+
+<div class="card">
+<h4><span class="tag q2">T9</span>只在头部修正</h4>
+<div class="meta">新颖度：低到中 ｜ 与对比解码的"可信集合约束"同源</div>
+<p><b>选股研究做法。</b>动态增强只修正基础排名靠前的股票。网格实验中，修正前 50%、强度 0.4 最好；把范围收窄到前 10% 时主指标降低约 3.0pp，强度加到 0.6 和 0.8 也分别降低 1.43pp 和 3.02pp（全期）。</p>
+<p><b>LLM 迁移。</b>steering、CFG、奖励引导解码的修正都只作用于基础模型的 top-p 集合，强度取中等。这与对比解码中"只在 p ≥ α·max p 的候选上修正"一致；选股研究的数据说明修正范围和强度都有清晰的最优区间。</p>
+</div>
+
+<div class="card">
+<h4><span class="tag q2">T10</span>低信噪比研究的协议</h4>
+<div class="meta">性质：方法论 ｜ V4.1 的 scaling ladder（p20）是同一思想在训练规模维度上的版本</div>
+<p><b>选股研究做法。</b>同一架构跨全部评价年度固定，不挑年度赢家；三组种子；20 日循环块 bootstrap（5,000 次）；预登记小参数族；记录暴露。中期复盘指出单点测试"相当于抛硬币"，只看前段和单种子的筛选有偏。</p>
+<p><b>量化。</b>两个相邻最佳方案的配对差是 +0.17pp，区间 [−0.22, 0.57]，即配对区间半宽约 0.4pp。小于这个量级的改进在单次比较中无法分辨。</p>
+<p><b>LLM 迁移。</b>架构消融和基准评测有同样的开发暴露与样本相关问题。建议对同一任务族的样本做块 bootstrap；跑实验前先算最小可检测效应；对反复使用的基准记录暴露次数。</p>
+</div>
+
+<h3 id="q2-rank">3.2 优先级</h3>
+<table>
+<thead><tr><th>做法</th><th>对基础模型的潜在价值</th><th>验证成本</th><th>建议优先级</th></tr></thead>
+<tbody>
+<tr><td>T5 蒸馏可迁移性规律</td><td>高：直接影响多教师 OPD 的教师选择与权重分配</td><td>低（只需记录指标）</td><td><b>高</b></td></tr>
+<tr><td>T2 有界对比外推</td><td>中高：对 CFG、对比解码、ExPO、循环模型都适用</td><td>低</td><td><b>高</b></td></tr>
+<tr><td>T10 研究协议</td><td>方法论：减少架构消融中的假阳性</td><td>低</td><td><b>高</b></td></tr>
+<tr><td>T1 短窗闭式读出</td><td>中：在线学习、个性化、长程 agent</td><td>中</td><td>中高</td></tr>
+<tr><td>T6 全分布主损失 + 头部辅助约束</td><td>中：RL 与偏好优化中的目标设计</td><td>中</td><td>中</td></tr>
+<tr><td>T4 配方多样性</td><td>中：集成、教师池、模型合并</td><td>低</td><td>中</td></tr>
+<tr><td>T7 双时间尺度与更新节奏</td><td>中：持续预训练、在线学习</td><td>高</td><td>中</td></tr>
+<tr><td>T8 成熟度纪律</td><td>中：延迟奖励的在线 RL</td><td>中</td><td>中</td></tr>
+<tr><td>T3 先校准再混合</td><td>低到中：多教师、多奖励模型</td><td>低</td><td>中</td></tr>
+<tr><td>T9 只在头部修正</td><td>低到中：steering 与引导解码</td><td>低</td><td>低</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="q3">
+<h2>4. 问题三：对 loop transformer 基础模型研究的启发</h2>
+<p>loop transformer 指权重共享、在深度方向循环执行同一模块的模型，例如 Universal Transformer、循环深度的潜在推理模型、Mixture-of-Recursions，以及 HRM / TRM 这类递归推理模型。它们面临四个核心问题：迭代之间是否稳定、什么时候停止、每次迭代的 KV 成本，以及如何训练中间迭代。选股研究有一个不太显眼但很贴切的对应物：它的残差链本身就是一次"展开的迭代精修"。</p>
+
+<h3 id="q3-chain">4.1 选股研究的残差链就是展开的迭代精修</h3>
+<p>残差链的每一级都可以写成：</p>
+<div class="formula">score_{k+1} = score_k + α_k · f_k(score_k, 特征, 成熟反馈)</div>
+<p>前沿曲线（图 1）呈现出不动点迭代的典型特征：每一级的增益递减；α<sub>k</sub> 通常很小（0.1–0.4 std）；少数位置的过松弛（×2）有效；更大的放大（×4）有害；最后用时间方向的截断差分外推又带来一次跳升。经典数值分析里，小步长保证收缩，适度过松弛（SOR）加速收敛，末端可以用割线或 Anderson 类方法外推。选股研究用实验重走了一遍这条路。</p>
+
+<h3 id="q3-ideas">4.2 十条设计启发</h3>
+
+<figure>
+<div class="frame">
+<svg viewBox="0 0 960 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="借鉴选股研究与 DeepSeek 的 loop transformer 设计草图" style="width:100%;height:auto;font-family:inherit">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0L10,5L0,10z" fill="#374151"/></marker></defs>
+<rect width="960" height="400" fill="#fffdf8"/>
+<rect x="20" y="140" width="190" height="110" rx="10" fill="#eff6ff" stroke="#93c5fd"/>
+<text x="115" y="166" font-size="14" font-weight="700" text-anchor="middle" fill="#1e3a8a">输入 x · 首次迭代</text>
+<text x="115" y="192" font-size="12" text-anchor="middle" fill="#1f2328">Full 模式：计算 KV 与 indexer</text>
+<text x="115" y="214" font-size="12" text-anchor="middle" fill="#1f2328">CED 变体：全局 KV 只算一次</text>
+<text x="115" y="236" font-size="12" text-anchor="middle" fill="#1f2328">建立 top-k 候选池</text>
+<line x1="210" y1="195" x2="246" y2="195" stroke="#374151" stroke-width="1.6" marker-end="url(#ah)"/>
+<rect x="250" y="80" width="370" height="230" rx="12" fill="#f0fdfa" stroke="#0f766e" stroke-width="1.5"/>
+<text x="435" y="106" font-size="14" font-weight="700" text-anchor="middle" fill="#0f766e">循环块 F（权重共享，第 k 次迭代）</text>
+<rect x="268" y="120" width="334" height="38" rx="7" fill="#ffffff" stroke="#99f6e4"/>
+<text x="280" y="144" font-size="12.5" fill="#1f2328">mHC 多流混合：B 为双随机矩阵，B^K 仍非扩张</text>
+<rect x="268" y="166" width="334" height="38" rx="7" fill="#ffffff" stroke="#99f6e4"/>
+<text x="280" y="190" font-size="12.5" fill="#1f2328">有界步长：h ← h + s·tanh(a_k)·F(h, x)</text>
+<rect x="268" y="212" width="334" height="38" rx="7" fill="#ffffff" stroke="#99f6e4"/>
+<text x="280" y="236" font-size="12.5" fill="#1f2328">注意力：Reindex（池内重选 top-k）或 Reuse</text>
+<text x="280" y="274" font-size="11.5" fill="#115e59">a_k 零初始化；混合系数用上一迭代的 A_{k−1}</text>
+<text x="280" y="294" font-size="11.5" fill="#115e59">MoE 路由在首次迭代确定，之后沿用</text>
+<path d="M590,310 C590,350 280,350 280,314" fill="none" stroke="#0f766e" stroke-width="1.6" marker-end="url(#ah)"/>
+<text x="435" y="368" font-size="12" text-anchor="middle" fill="#0f766e">k = 2…K；K 由强度标量 b 控制，迭代次数加指数惩罚</text>
+<line x1="620" y1="150" x2="666" y2="135" stroke="#374151" stroke-width="1.6" marker-end="url(#ah)"/>
+<line x1="620" y1="240" x2="666" y2="250" stroke="#374151" stroke-width="1.6" marker-end="url(#ah)"/>
+<rect x="670" y="80" width="270" height="100" rx="10" fill="#fff7ed" stroke="#fdba74"/>
+<text x="805" y="106" font-size="14" font-weight="700" text-anchor="middle" fill="#9a3412">退出 / 置信头</text>
+<text x="805" y="132" font-size="12" text-anchor="middle" fill="#1f2328">在冻结的各次迭代状态上单独训练</text>
+<text x="805" y="154" font-size="12" text-anchor="middle" fill="#1f2328">（DSpark 式，梯度不回传主干）</text>
+<rect x="670" y="200" width="270" height="110" rx="10" fill="#fff7ed" stroke="#fdba74"/>
+<text x="805" y="226" font-size="14" font-weight="700" text-anchor="middle" fill="#9a3412">输出</text>
+<text x="805" y="252" font-size="12.5" text-anchor="middle" fill="#1f2328">h_K + η·clip(h_K − h_{K−1}, ±c)</text>
+<text x="805" y="276" font-size="12" text-anchor="middle" fill="#1f2328">可选：对多个 K 的预测取平均</text>
+<text x="805" y="296" font-size="12" text-anchor="middle" fill="#1f2328">监测 ‖h_k − h_{k−1}‖ 判断收敛</text>
+<text x="20" y="393" font-size="12" fill="#6b7280">选股研究中的对应：读出小幅度 ｜ ×2 有效、×4 有害 ｜ 差分截断 ±1σ 最优 ｜ 共享 Gram 只重算目标 ｜ 冻结隐状态上的读出 ｜ 不同训练轮次的学生混合</text>
+</svg>
+</div>
+<figcaption>图 5｜一个综合选股研究经验与 DeepSeek 组件的 loop transformer 设计草图（假设，未经验证）。</figcaption>
+</figure>
+
+<div class="card">
+<h4><span class="tag q3">L1</span>小步长 + 有界过松弛 + 末端截断割线外推</h4>
+<p><b>设计。</b>每次迭代 h<sub>k+1</sub> = h<sub>k</sub> + α<sub>k</sub>·F(h<sub>k</sub>, x)，α<sub>k</sub> = s·tanh(a<sub>k</sub>) 有界且 a<sub>k</sub> 零初始化；循环结束后输出 h<sub>K</sub> + η·clip(h<sub>K</sub> − h<sub>K−1</sub>, ±c)。</p>
+<p><b>依据。</b>选股研究中小幅度最好、×2 有效而 ×4 有害、差分截断 ±1σ 最优（图 4）。<b>可检验的预测：</b>末端外推能用更少的迭代达到同等效果；截断能避免个别 token 的发散。</p>
+</div>
+
+<div class="card">
+<h4><span class="tag q3">L2</span>mHC 的双随机混合天然适合权重共享</h4>
+<p><b>依据。</b>双随机矩阵对乘法封闭：同一个 B 自乘 K 次仍是双随机矩阵，谱范数不超过 1，循环多少次都不会放大信号（DSV4 p8）。不加约束的 HC 在循环中相当于把同一个矩阵自乘 K 次，比在普通深层网络中更容易失稳。</p>
+<p><b>设计。</b>循环块内部用 mHC 混合多条残差流，只在输出端允许有界扩张（结合 L1）。V4.1 的 Single-Pass mHC 让第 l 块使用上一块的混合系数 A<sub>l−1</sub>（p13）；在循环中这一做法更自然：第 k 次迭代使用第 k−1 次的系数，既能流水化，也与选股研究"一切门控都用滞后数据计算"的做法一致。</p>
+</div>
+
+<div class="card">
+<h4><span class="tag q3">L3</span>跨迭代 KV 复用：把 CSA2 和 CED 搬到迭代维度</h4>
+<p><b>问题。</b>循环 K 次通常要生成 K 份 KV，这是 loop transformer 推理成本的主要来源。</p>
+<p><b>设计。</b>第一次迭代用 Full 模式计算 KV 与 indexer；后续迭代用 Reindex（共享 KV，用本次迭代的 indexer Q 在候选池内重选 top-k）或 Reuse（连 top-k 一起复用）。CED 的思路则是：编码器只算一次全局 KV，循环的只是解码器，每次迭代保留自己的 SWA 局部状态。</p>
+<p><b>选股研究对应。</b>多个读出头共享同一 Gram（key 侧），只重算各自的目标（query 侧），效果没有损失。<b>可检验的预测：</b>迭代之间的注意力目标高度相似，Reindex 足以捕捉迭代间的选择变化，KV 成本可以从随 K 线性增长降到接近常数。</p>
+</div>
+
+<div class="card">
+<h4><span class="tag q3">L4</span>退出头和置信头在冻结的循环状态上单独训练</h4>
+<p><b>依据。</b>选股研究的联合辅助头无效、冻结隐状态上的读出有效；V4.1 用在冻结主干上训练的 DSpark 取代 MTP。</p>
+<p><b>设计。</b>先训练循环主干，再冻结主干，在各次迭代的状态上训练"是否继续迭代"的置信头，避免辅助损失干扰主干的表示。</p>
+</div>
+
+<div class="card">
+<h4><span class="tag q3">L5</span>用强度标量控制循环次数</h4>
+<p><b>设计。</b>借用 V4.1 的推理强度 b 与指数惩罚 k(b) = k<sub>0</sub>·exp(−(b − b<sub>min</sub>)/τ)，把惩罚加在迭代次数上而不是 token 数上，让单一模型覆盖连续的计算预算。</p>
+<p><b>可检验的预测。</b>增益前置：选股研究的强度旋钮和 V4.1 的推理强度都表现为中低档拿到大部分收益（V4.1 p34）。</p>
+</div>
+
+<div class="card">
+<h4><span class="tag q3">L6</span>从流水线到循环的蒸馏</h4>
+<p><b>依据。</b>选股研究的完整配方比裸学生高约 6pp，增益来自几级推理期精修；复杂教师的多级残差链天然提供了逐级的中间目标。</p>
+<p><b>设计。</b>用教师流水线各级的输出监督循环第 k 次迭代（逐级深度监督），让一个小的循环块学会复现多级精修。在 LLM 里，可以用"逐步变好的教师序列"（例如同一教师在不同推理强度下的输出）分别监督不同迭代深度。</p>
+</div>
+
+<div class="card">
+<h4><span class="tag q3">L7</span>迭代内的闭式 ridge（fast weights）</h4>
+<p><b>依据。</b>选股研究最可靠的自适应模块是短窗闭式 ridge；理论工作表明 transformer 可以在上下文中执行梯度下降或最小二乘（von Oswald 等人的系列工作）。</p>
+<p><b>设计。</b>每次迭代执行一步上下文内的最小二乘或共轭梯度，使用短窗和与 Gram 迹成比例的 λ，循环次数对应优化步数。这给"循环为什么有用"提供了一个可分析的版本。</p>
+</div>
+
+<div class="card">
+<h4><span class="tag q3">L8</span>跨深度集成</h4>
+<p><b>依据。</b>选股研究中 1 轮与 2 轮训练的学生混合，优于任一种单独使用。</p>
+<p><b>设计。</b>把 K = 4、6、8 次迭代的输出做预测平均，或用退出头的置信度加权，以极低成本获得多样性。</p>
+</div>
+
+<div class="card">
+<h4><span class="tag q3">L9</span>收缩性与"过度思考"</h4>
+<p><b>依据。</b>选股研究中第三轮训练、季度更新、×4 放大都没有更好：更多迭代并不单调有益。</p>
+<p><b>设计。</b>监测迭代残差 ‖h<sub>k+1</sub> − h<sub>k</sub>‖ 是否单调下降，作为不动点收敛的诊断；在 RL 阶段用 V4.1 式的迭代惩罚抑制过度迭代。</p>
+</div>
+
+<div class="card">
+<h4><span class="tag q3">L10</span>迭代内路由不变</h4>
+<p><b>依据。</b>DSV4 的 Anticipatory Routing 用滞后参数计算路由来稳定训练（p26）；CSA2 的 Reuse 直接复用 top-k；选股研究的所有选择都基于滞后、平滑的统计。</p>
+<p><b>设计。</b>循环中的 MoE 路由在首次迭代决定，后续迭代复用或只允许小幅变化，既稳定训练，也便于提前预取专家。</p>
+</div>
+
+<h3 id="q3-plan">4.3 一个最小可行的验证方案</h3>
+<table>
+<thead><tr><th>组别</th><th>相对上一组的改动</th><th>主要检验的启发</th></tr></thead>
+<tbody>
+<tr><td>L0 基线</td><td>普通权重共享循环（K 次，带输入注入）</td><td>—</td></tr>
+<tr><td>L1</td><td>加有界步长 α<sub>k</sub> = s·tanh(a<sub>k</sub>)，a<sub>k</sub> 零初始化</td><td>L1、L9</td></tr>
+<tr><td>L2</td><td>加 mHC 双随机多流混合（n = 4）</td><td>L2</td></tr>
+<tr><td>L3</td><td>加末端截断割线外推（η、c 各两档，事先固定）</td><td>L1</td></tr>
+<tr><td>L4</td><td>加跨迭代 Reindex / Reuse 的 KV 复用</td><td>L3、L10</td></tr>
+<tr><td>L5</td><td>加强度标量控制 K 与迭代惩罚</td><td>L5、L8</td></tr>
+</tbody>
+</table>
+<p><b>观测指标：</b>困惑度随测试时 K 的变化（包括超过训练时的 K）；迭代残差范数曲线；梯度范数与 loss spike 次数；推理类任务准确率；KV 显存占用。<b>规模：</b>先在 1–3 亿参数、单一循环块的模型上完成 L0–L3，再决定是否做 L4、L5。<b>协议：</b>每组 3 个种子，报告块 bootstrap 区间，看到结果之后不再调整 η 和 c（第 3 节 T10）。</p>
+</section>
+
+<section id="q4">
+<h2>5. 问题四：两个新模型对选股研究后续提升的 trick / insight</h2>
+
+<h3 id="q4-diag">5.1 先诊断：平台期说明了什么</h3>
+<ul>
+  <li><b>后处理路线基本饱和。</b>最后一次大幅爬升之后又做了约 1,100 个实验，后段主指标累计只多了约 0.25pp。</li>
+  <li><b>教师不是瓶颈。</b>多期限残差教师、滞后异构专家、树/MLP/GRU 组合、不同历史长度的 MLP、不同数据视角的专家等十几种教师，蒸馏出的学生完整配方全部落在约 0.25pp 的窄带里；多组教师平均、训练期辅助头也都在这条带内。</li>
+  <li><b>学生的学习接口才是瓶颈。</b>学生对教师排序的保留度只有 0.82–0.83；教师 +0.83pp 只传过来约 0.1pp。学生隐藏层宽度从 128、192 到 256，结果相差不到 0.2pp，所以也不是容量问题。学教师比学真实标签高约 3.6pp，说明"学什么、怎么学"的影响远大于"模型多大"。</li>
+  <li><b>统计分辨率不足以支撑微调。</b>距内部目标 0.87pp，约为配对区间半宽（≈0.4pp）的 2 倍。±0.2pp 级的改动在当前评价框架下无法确认；值得跑的想法应有机制支持 ≥1pp 的效应，或者把几个独立的小改进预登记为一个组合整体检验。</li>
+  <li><b>信息源没有扩张</b>，而这恰好是 V4.1 认为回报最高的方向。</li>
+</ul>
+<div class="callout info"><b>一句话：</b>该研究现在缺的不是更好的教师或更多的后处理，而是学生能从教师那里学到多少（学习接口），以及系统能看到多少新信息（数据）。两份报告恰好在这两点上给出了最直接的经验：OPD 的目标设计，以及数据优先。</div>
+
+<h3 id="q4-road">5.2 路线图（按优先级）</h3>
+<figure>
+<div class="frame" style="text-align:center"><svg viewBox="0 0 760 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="选股研究后续方向的预期收益与成本（主观评估）" style="width:100%;max-width:820px;height:auto;font-family:inherit">
+<rect width="760" height="460" fill="#fffdf8"/>
+<rect x="70" y="30" width="330.0" height="185.0" fill="#ecfdf5"/>
+<rect x="70" y="30" width="660" height="370" fill="none" stroke="#9ca3af"/>
+<line x1="400.0" y1="30" x2="400.0" y2="400" stroke="#d1d5db" stroke-dasharray="4 4"/>
+<line x1="70" y1="215.0" x2="730" y2="215.0" stroke="#d1d5db" stroke-dasharray="4 4"/>
+<text x="78" y="48" font-size="12" fill="#047857">先做：预期收益高、成本低</text>
+<text x="722" y="48" font-size="12" text-anchor="end" fill="#6b7280">战略投入：收益高、成本高</text>
+<text x="722" y="390" font-size="12" text-anchor="end" fill="#9ca3af">不建议优先</text>
+<text x="78" y="390" font-size="12" fill="#6b7280">廉价并行测试</text>
+<text x="400.0" y="430" font-size="12.5" text-anchor="middle" fill="#374151">实施成本（数据、工程、计算、合规审计）→</text>
+<text x="22" y="215.0" font-size="12.5" text-anchor="middle" fill="#374151" transform="rotate(-90 22 215.0)">预期对主指标的提升 →</text>
+<circle cx="287.8" cy="104.0" r="7" fill="#9a3412"/>
+<text x="298.8" y="108.5" font-size="12.5" text-anchor="start" fill="#1f2328"><tspan font-weight="700">P1</tspan> OPD 式截面蒸馏</text>
+<circle cx="637.6" cy="67.0" r="7" fill="#9a3412"/>
+<text x="626.6" y="71.5" font-size="12.5" text-anchor="end" fill="#1f2328"><tspan font-weight="700">P2</tspan> 数据优先</text>
+<circle cx="268.0" cy="170.6" r="7" fill="#9a3412"/>
+<text x="279.0" y="175.1" font-size="12.5" text-anchor="start" fill="#1f2328"><tspan font-weight="700">P3</tspan> 按学生收益选教师 + 隐状态蒸馏</text>
+<circle cx="505.6" cy="229.8" r="7" fill="#1d4ed8"/>
+<text x="516.6" y="234.3" font-size="12.5" text-anchor="start" fill="#1f2328"><tspan font-weight="700">P4</tspan> 长历史压缩时序编码器</text>
+<circle cx="162.4" cy="281.6" r="7" fill="#1d4ed8"/>
+<text x="173.4" y="286.1" font-size="12.5" text-anchor="start" fill="#1f2328"><tspan font-weight="700">P5</tspan> Muon / Sinkhorn 更新</text>
+<circle cx="215.2" cy="337.1" r="7" fill="#1d4ed8"/>
+<text x="226.2" y="341.6" font-size="12.5" text-anchor="start" fill="#1f2328"><tspan font-weight="700">P6</tspan> 学习的有界混合器</text>
+<circle cx="400.0" cy="289.0" r="7" fill="#1d4ed8"/>
+<text x="411.0" y="293.5" font-size="12.5" text-anchor="start" fill="#1f2328"><tspan font-weight="700">P7</tspan> 强度条件化学生</text>
+<circle cx="452.8" cy="259.4" r="7" fill="#1d4ed8"/>
+<text x="463.8" y="263.9" font-size="12.5" text-anchor="start" fill="#1f2328"><tspan font-weight="700">P8</tspan> Engram 模式记忆</text>
+<circle cx="360.4" cy="207.6" r="7" fill="#1d4ed8"/>
+<text x="371.4" y="212.1" font-size="12.5" text-anchor="start" fill="#1f2328"><tspan font-weight="700">P9</tspan> 部署感知目标</text>
+<circle cx="584.8" cy="355.6" r="7" fill="#9ca3af"/>
+<text x="573.8" y="360.1" font-size="12.5" text-anchor="end" fill="#1f2328"><tspan font-weight="700">P10</tspan> 截面稀疏注意力</text>
+<text x="70" y="454" font-size="11" fill="#9ca3af">位置是作者依据该研究的历史证据的主观判断，用于排序讨论，不是定量预测。</text>
+</svg></div>
+<figcaption>图 6｜十个方向的预期收益与实施成本（主观评估，仅用于排序讨论）。深色为建议优先的三项。</figcaption>
+</figure>
+
+<table>
+<thead><tr><th>优先级</th><th>方向</th><th>报告依据</th><th>在选股研究中怎么做</th><th>主要风险</th></tr></thead>
+<tbody>
+<tr><td><b>P1</b></td><td>OPD 式截面蒸馏：全截面、头部加权、reverse KL，保留 MSE 锚</td><td>多教师 OPD 用 reverse KL 和全词表 logit，逐 token 估计方差高、训练不稳（DSV4 p32–33）</td><td>把每天的截面当作"词表"，在教师分布上做头尾两侧的 reverse KL，按学生自己当前的头尾十分位加权；保留 MSE 与风险惩罚。详见 5.3。</td><td>早期在真实标签上的排序或头部目标都失败过；必须保留 MSE 锚。</td></tr>
+<tr><td><b>P2</b></td><td>数据优先：新信息源、隐性重复过滤、scaling ladder</td><td>数据与环境的系统改进"几乎解释了全部增益"（V4.1 p25）；隐性重复、scaling ladder（p20）</td><td>引入与现有来源正交、可做时间点审计的新数据，先以短窗成熟读出接入；按"对主分数残差后的增量"剪枝特征；用小尺度代理筛选数据改动。详见 5.3。</td><td>数据可得性与审计成本；代理与全尺度的排序可能不一致。</td></tr>
+<tr><td><b>P3</b></td><td>按学生收益选教师，加教师隐状态蒸馏</td><td>"每个领域的最佳教师可能来自不同开发阶段"（V4.1 p32）；缓存教师末层隐状态现场重建 logits（DSV4 p34）</td><td>预定义少量市场状态，按成熟窗口上的学生收益为每个状态分配教师；学生末层经线性映射对齐教师隐状态的低维投影。详见 5.3。</td><td>状态划分容易过拟合；隐状态对齐可能束缚学生自己的表示。</td></tr>
+<tr><td>P4</td><td>长历史压缩时序编码器，作为低回撤成员</td><td>混合注意力；"SWA 局部骨干 + 压缩全局上下文"（V4.1 p4）</td><td>最近 5–10 日全分辨率（SWA），更早历史按周压缩并用 indexer 选 top-k 个最相关的历史块（CSA），再按月或季度重压缩为少量条目（HCA）；先以小份额进入完整配方。</td><td>以往的 GRU、TCN、长窗口 CNN 都无效，现有短时序学生也未超过静态学生。但一个很小的直接时序模型的全期最大回撤不到其他方案的一半，有分散价值。</td></tr>
+<tr><td>P5</td><td>用 Muon / head-wise Muon 与 Sinkhorn-balanced 更新训练学生</td><td>Muon（DSV4 p14）；head-wise Muon、Sinkhorn-balanced 更新（V4.1 p14–16）</td><td>学生每年只训练约 180 步，优化器的样本效率很关键：矩阵参数用 Muon，高维输入投影试 Sinkhorn-balanced 更新，其余保留 AdamW；同时观察种子方差是否下降。</td><td>AdamW 框架内的调整（SAM、余弦学习率、批大小、学习率）都没有帮助（−0.18 至 −0.96pp），预期效应偏小；但成本低，适合并行。</td></tr>
+<tr><td>P6</td><td>学习的有界混合器替代手调旋钮</td><td>mHC 的双随机约束与小初值门控</td><td>每年在全部成熟历史上一次性拟合"凸组合 + 有界外推增益"的混合器，强收缩到现有常数。</td><td>自适应权重历史上多次不如固定权重；主要价值是减少人为选择带来的暴露。</td></tr>
+<tr><td>P7</td><td>强度条件化的学生</td><td>推理强度 b 与指数惩罚（V4.1 p34, p48–50）</td><td>训练时把风格强度、差分强度作为 FiLM 条件输入，目标为教师分数加对应强度的成分；部署时在成熟窗口上选择强度。</td><td>训练目标更复杂，收益不确定。</td></tr>
+<tr><td>P8</td><td>Engram 式哈希模式记忆</td><td>Engram（V4.1 p13）</td><td>以离散状态 n-gram 为键（例如最近几日的收益、换手、涨跌停分位模式，与行业、市值档组合），哈希到嵌入表，在学生第一层后注入，学习率放大。键是模式而不是股票身份（股票身份嵌入已试过，无效）。</td><td>可能只是重复已有的技术因子。</td></tr>
+<tr><td>P9</td><td>部署感知的学生目标</td><td>V4.1 在训练中模拟分层索引与 bounded replay；FP4 QAT</td><td>学生训练时考虑部署时会与树模型和读出混合，让学生拟合与树互补的目标，或直接在最终组合分数上计算损失。</td><td>早期拟合树残差的 NN 未能晋级；还需确认不违反项目的研究规则。</td></tr>
+<tr><td>P10</td><td>截面稀疏注意力（股票间 top-k）——不建议优先</td><td>CSA / HCA</td><td>用学习的 indexer 给股票对打分，每只股票只看 top-k 只相似股票，加行业、市值的压缩条目。</td><td>按收益相关选邻居几乎无变化；截面 inducing-token 注意力两个年度主指标都更低；行业内相对特征、行业均值注入也无稳定增益。</td></tr>
+</tbody>
+</table>
+
+<h3 id="q4-detail">5.3 前三项的具体方案</h3>
+
+<div class="card">
+<h4><span class="tag q4">P1</span>OPD 式截面蒸馏</h4>
+<div class="formula">对每个交易日 t 的可交易股票集合 S_t（z_T 为教师分数，z_S 为学生分数，均为截面 z-score）：
+  多头侧  p_T = softmax(z_T / τ)     p_S = softmax(z_S / τ)
+  空头侧  q_T = softmax(−z_T / τ)    q_S = softmax(−z_S / τ)
+  L = MSE(z_S, z_T) + λ·风险惩罚 + β·[ KL(p_S ‖ p_T) + KL(q_S ‖ q_T) ]
+  on-policy 版本：KL 项再按学生当前的头尾十分位成员（stop-gradient）加权</div>
+<p><b>关键设定。</b>τ 取使教师前 10% 的股票占约 70% 概率质量的值（事先固定）；β 取 0.1 和 0.3 两档；按交易日组 batch，每批包含少数几个交易日的全截面。学生结构、轮次和年中更新保持当前最佳方案不变。</p>
+<p><b>为什么可能有效。</b>第一，当前的 MSE 对截面中间 80% 的股票和头尾一视同仁，而主指标只看头尾；reverse KL 是寻模的，会优先拟合教师的头部。第二，早期在真实标签上做排序或头部目标都失败了，但真实标签噪声很大；教师目标已经去噪，DSV4 的经验也是在教师分布上做全分布 KL 才稳定。第三，保留 MSE 锚能避免只看头部带来的方差爆炸。</p>
+<p><b>判据。</b>除主指标外，同时报告学生与教师在头尾十分位内的 RankIC（保真度），并检验迁移比是否上升：用两个相差约 0.83pp 的教师各训练一次学生，看这一差距能否更多地传给学生。如果保真度上升而主指标不升，说明瓶颈已转移到教师或信息量上。</p>
+</div>
+
+<div class="card">
+<h4><span class="tag q4">P2</span>数据优先</h4>
+<p><b>新来源。</b>在可得、可做时间点审计的前提下，优先考虑与现有特征、资金流、一致预期正交的信息，例如融资融券、外资持股变化、公告与新闻文本中的事件特征、分析师修订细项、期权隐含信息（视覆盖情况）。</p>
+<p><b>接入方式。</b>先作为独立的短窗成熟读出接入。这是该研究历史上最可靠的接入路径：资金流、一致预期等读出都是叠加在强基座上取得增益，而把新来源直接拼进主网络输入的效果有限。确认有增量之后，再考虑进入学生输入。</p>
+<p><b>隐性重复。</b>按"对主分数残差化之后的信息增量"剪枝特征。在一次对照中，剪掉约一半特征的完整配方比未剪枝高 0.44pp，说明存在可去除的冗余。</p>
+<p><b>scaling ladder。</b>用小尺度代理（较短区间、较小学生、单种子）预测全尺度效果：先检验代理与全尺度在已有实验上的排序一致性，一致性足够时再用代理筛选数据改动。这对应 V4.1 的做法（p20），也是对"筛选协议有偏"这一复盘结论的直接修正。</p>
+</div>
+
+<div class="card">
+<h4><span class="tag q4">P3</span>按学生收益选教师，加隐状态蒸馏</h4>
+<p><b>按学生收益选教师。</b>教师库里已有多个教师。预先定义少量市场状态（例如截面收益离散度高或低、市值风格强或弱，只用决策前一日可得的数据），在每个状态内用成熟窗口上的学生收益而不是教师自身的主指标来选择教师或分配权重，每年确定一次，不做每日自适应。</p>
+<p><b>隐状态蒸馏。</b>DSV4 为了支持大量教师，只缓存教师末层隐状态，训练时再现场重建 logits（p34）。教师的末层隐状态及其固定随机投影已经在读出中使用，可以直接作为学生的辅助目标：学生末层经线性映射后对齐教师的低维投影（小权重 MSE）。这能给学生提供比单一排序分数丰富得多的监督，正对"保留度只有 0.82"这一瓶颈。</p>
+</div>
+
+<h3 id="q4-stop">5.4 不建议继续做的事</h3>
+<ul>
+  <li><b>继续制造教师变体。</b>在学习接口不变的情况下，教师之间的差异传不到学生。</li>
+  <li><b>在后处理上做 ±0.2pp 级的旋钮微调。</b>当前统计分辨率下无法区分真假。</li>
+  <li><b>每日自适应权重或置信度门控。</b>固定权重在历史上多次胜出。</li>
+  <li><b>以头部指标直接作为主损失。</b>二分类和上侧 expectile 目标都严重退化。</li>
+  <li><b>大倍数外推。</b>×4、强度 0.8 已被证伪，外推还会推高回撤。</li>
+  <li><b>在没有新信息的情况下替换主干结构。</b>token 注意力、MoE、GRU、双塔、白化等的历史结果为负面或持平。</li>
+</ul>
+<div class="callout">所有建议都应在"同一架构跨全部评价年度固定、三组种子、块 bootstrap、严格成熟边界"的协议下执行；新数据源必须做时间点审计。由于全部评价年度已被暴露，若有更新的数据，应保留为真正的前向检验集。</div>
+</section>
+
+<section id="caveats">
+<h2>6. 局限与注意事项</h2>
+<ul>
+  <li><b>暴露与选择偏差。</b>选股研究的全部评价年度已被反复用于开发与选择，任何"达到目标"的结果都含有选择偏差。本文引用的增益大多是点估计。</li>
+  <li><b>置信区间。</b>多数配对比较的区间跨零，例如快反馈改进为 [−0.31, 2.48]，两个相邻最佳方案之差为 [−0.22, 0.57]。点估计的排序不等于可靠的差异。</li>
+  <li><b>类比不等于证据。</b>第 2 节的对应关系说明两边在用相同的设计原理，不说明某个 DeepSeek 组件移植到选股研究就会有效，反过来也一样。第 3–5 节的建议都是待验证的假设。</li>
+  <li><b>DeepSeek 的数字未经复现。</b>KV 压缩比、FLOPs、基准分数等都来自报告本身。页码为 PDF 页码，与两份报告的印刷页码一致。</li>
+  <li><b>脱敏处理。</b>为便于公开，本文删去了绝对业绩水平、资金规模、市场与数据来源、内部编号与系统细节；部分数字做了取整（如"约 0.25pp""约 6pp"）。删去的信息不影响文中方法层面的结论。</li>
+</ul>
+</section>
+
+<section id="appendix">
+<h2>附录</h2>
+
+<h3>A. 选股研究证据摘要（相对值）</h3>
+<table>
+<thead><tr><th>比较</th><th>口径</th><th>差值</th><th>在本文中的作用</th></tr></thead>
+<tbody>
+<tr><td>加入头部风险暴露软惩罚 vs 不加</td><td>全期主指标</td><td class="num">+2.07pp</td><td>头部辅助约束有效（T6）</td></tr>
+<tr><td>短期限快反馈 vs 原期限</td><td>全期主指标</td><td class="num">+1.06pp（区间跨零）</td><td>成熟度与反馈新鲜度（T8）</td></tr>
+<tr><td>候选因子稠密 ridge vs 正 IC Top-k</td><td>全期主指标</td><td class="num">+0.41pp；沿该路线累计 +2.18pp</td><td>硬 top-k 不是最优估计（原理二）</td></tr>
+<tr><td>头部修正强度 0.6 / 0.8 vs 0.4</td><td>全期主指标</td><td class="num">−1.43 / −3.02pp</td><td>修正强度存在最优区间（T9）</td></tr>
+<tr><td>读出幅度 0.25 / 0.5 vs 0.1 std</td><td>全期主指标</td><td class="num">−0.47 / −2.88pp</td><td>小幅度最好（T1）</td></tr>
+<tr><td>自适应可靠性收缩 vs 固定幅度</td><td>全期主指标</td><td class="num">−0.64pp</td><td>固定小幅度优于自适应（T1）</td></tr>
+<tr><td>读出窗口 20 日 vs 60 日</td><td>全期 / 后段主指标</td><td class="num">+0.84 / +1.11pp</td><td>短窗优于长窗（原理一）</td></tr>
+<tr><td>读出加入量 ×2 / ×4 vs ×1</td><td>全期主指标</td><td class="num">−0.50 / −1.59pp</td><td>放大过头有害（原理三）</td></tr>
+<tr><td>资金流与一致预期读出 vs 不加</td><td>后段主指标</td><td class="num">+1.26pp</td><td>信息推动前沿（原理七）</td></tr>
+<tr><td>排名头 2 倍外推 vs 不外推</td><td>后段主指标</td><td class="num">+1.15pp</td><td>受控越界（原理三、4.1）</td></tr>
+<tr><td>风格反向外推 vs 不外推</td><td>全期主指标 / 全期最大回撤</td><td class="num">+1.16pp / 回撤 +1.44pp</td><td>越界的收益与代价（原理三）</td></tr>
+<tr><td>差分外推 η=0.5 / 1 vs η=0</td><td>后段主指标</td><td class="num">+0.83 / +2.30pp</td><td>有界对比外推（T2）</td></tr>
+<tr><td>差分截断 ±0.5σ / ±2σ vs ±1σ</td><td>后段主指标</td><td class="num">−1.02 / −0.39pp</td><td>截断存在内部最优（T2、原理四）</td></tr>
+<tr><td>只加正向 / 只加负向 vs 双向</td><td>后段主指标</td><td class="num">−0.90 / −2.19pp</td><td>正向变化贡献更大（T2）</td></tr>
+<tr><td>2 日 / 5 日均值差分 vs 1 日差分</td><td>后段主指标</td><td class="num">−0.75 / −1.55pp</td><td>只用最新一步（T2）</td></tr>
+<tr><td>学生学教师排序 vs 学真实标签</td><td>后段主指标（完整配方）</td><td class="num">+3.6 至 +3.8pp</td><td>教师是更干净的监督（T5）</td></tr>
+<tr><td>年中增量更新 vs 不更新</td><td>后段主指标（裸学生）</td><td class="num">+2.57pp</td><td>增量更新有效（T7）</td></tr>
+<tr><td>季度更新 vs 半年更新</td><td>全期主指标</td><td class="num">−0.22 / −0.44pp</td><td>更新并非越频繁越好（T7）</td></tr>
+<tr><td>年龄加权（半衰期约一年）vs 等权</td><td>后段主指标</td><td class="num">−1.35pp，区间 [−2.25, −0.50]</td><td>主模型不应偏向近期（原理一）</td></tr>
+<tr><td>只用近三年训练 vs 全历史</td><td>全期主指标</td><td class="num">−3.94pp</td><td>主模型不应缩短窗口（原理一）</td></tr>
+<tr><td>独立学生参数平均 vs 单模型</td><td>后段主指标</td><td class="num">−0.44 / −0.64pp</td><td>同一盆地才合并参数（T4）</td></tr>
+<tr><td>SAM、余弦学习率、批大小、学习率调整 vs 基准设置</td><td>后段主指标</td><td class="num">−0.18 至 −0.96pp</td><td>AdamW 内调参无效（P5）</td></tr>
+<tr><td>两个相邻最佳方案</td><td>后段主指标</td><td class="num">+0.17pp，区间 [−0.22, 0.57]</td><td>统计分辨率（T10）</td></tr>
+<tr><td>学生宽度 128 / 192 / 256</td><td>后段主指标</td><td class="num">彼此相差 &lt;0.2pp</td><td>不是容量瓶颈（5.1）</td></tr>
+<tr><td>升级教师（+0.83pp）后的学生</td><td>后段主指标</td><td class="num">裸学生 +0.09 至 +0.16pp；完整配方 −0.08 至 −0.55pp</td><td>教师提升不迁移（T5）</td></tr>
+<tr><td>用学生预测再蒸馏 vs 原教师</td><td>后段主指标（完整配方）</td><td class="num">−0.70 至 −1.75pp</td><td>自蒸馏退化（T5）</td></tr>
+<tr><td>头部二分类 / 上侧 expectile vs MSE</td><td>全期主指标</td><td class="num">−7.26 / −4.02pp</td><td>头部指标不能做主损失（T6）</td></tr>
+<tr><td>token 注意力 vs MLP</td><td>全期主指标</td><td class="num">−0.50pp</td><td>结构替换无效（原理七）</td></tr>
+<tr><td>复杂教师 vs 学生 + 推理期模块</td><td>后段主指标</td><td class="num">学生方案高约 2.0pp</td><td>提炼到本质（原理七）</td></tr>
+</tbody>
+</table>
+
+<h3>B. 两份报告页码索引</h3>
+<table>
+<thead><tr><th>主题</th><th>DeepSeek-V4（arXiv:2606.19348）</th><th>DeepSeek-V4.1-Flash</th></tr></thead>
+<tbody>
+<tr><td>混合注意力 CSA / HCA / SWA</td><td>p9–13</td><td>—</td></tr>
+<tr><td>lightning indexer</td><td>p9–10</td><td>—</td></tr>
+<tr><td>attention sink、部分 RoPE</td><td>p13</td><td>—</td></tr>
+<tr><td>"SWA 局部骨干 + 压缩全局上下文"</td><td>—</td><td>p4</td></tr>
+<tr><td>CED</td><td>—</td><td>p8–9</td></tr>
+<tr><td>CSA2 的 Reindex / Reuse</td><td>—</td><td>p10–11</td></tr>
+<tr><td>分层稀疏索引器</td><td>—</td><td>p11–12</td></tr>
+<tr><td>mHC（Birkhoff 多面体）</td><td>p7–8</td><td>Single-Pass mHC p12–13</td></tr>
+<tr><td>Engram、DSpark</td><td>—</td><td>p13–14</td></tr>
+<tr><td>Muon 及其变体</td><td>p14</td><td>head-wise Muon、Sinkhorn-balanced 更新 p14–16</td></tr>
+<tr><td>batch-invariant 确定性 kernel</td><td>p18</td><td>—</td></tr>
+<tr><td>KV 精度与缓存</td><td>磁盘 KV 缓存 p23；FP4 QAT p33–34</td><td>FP4 主 KV p14；SWA Bounded Replay p19–20</td></tr>
+<tr><td>MTP</td><td>p24–25</td><td>移除，改用 DSpark p13–14</td></tr>
+<tr><td>Anticipatory Routing、SwiGLU clamp</td><td>p26</td><td>—</td></tr>
+<tr><td>专家训练与多教师 OPD</td><td>p28、p32–34</td><td>40 个以上异构教师 p32</td></tr>
+<tr><td>logit 对齐与权重合并</td><td>规避权重合并退化 p33</td><td>RL 运行之间的模型合并 p27</td></tr>
+<tr><td>教师隐状态缓存</td><td>p34</td><td>—</td></tr>
+<tr><td>数据观</td><td>—</td><td>"后训练没有算法创新" p6；隐性重复、scaling ladder p20；数据与环境几乎解释全部增益 p25</td></tr>
+<tr><td>推理强度与指数惩罚</td><td>三档推理模式</td><td>p34、附录 C p48–50</td></tr>
+<tr><td>agent team 的关键路径延迟惩罚</td><td>—</td><td>p36</td></tr>
+<tr><td>局限与未来方向</td><td>p44</td><td>p37</td></tr>
+</tbody>
+</table>
+
+<h3>C. 术语</h3>
+<table>
+<tbody>
+<tr><td>主指标 / 辅指标</td><td>分层多空回测 / 简单多空回测的年化收益。本文只报告两种配置之间的差值。</td></tr>
+<tr><td>后段 / 全期</td><td>最近三个完整评价年度 / 全部评价年度。</td></tr>
+<tr><td>成熟</td><td>标签所需的未来收益区间已经结束；h 日期限的标签需要 h+1 个交易日才成熟。</td></tr>
+<tr><td>读出</td><td>在冻结模型的输出或隐状态上，用最近若干成熟日闭式拟合的 ridge 修正项。</td></tr>
+<tr><td>完整配方 / 裸学生</td><td>学生 NN 与高斯秩校准的树模型各半，加短窗读出、风格外推和截断差分外推；不接这些模块的学生组合称为裸学生。</td></tr>
+<tr><td>保留度</td><td>学生预测与教师预测的截面秩相关（RankIC）。</td></tr>
+<tr><td>CSA / HCA / SWA</td><td>压缩稀疏注意力 / 重压缩注意力 / 滑动窗口注意力。</td></tr>
+<tr><td>mHC</td><td>流形约束的超连接：多条残差流，混合矩阵约束为双随机矩阵。</td></tr>
+<tr><td>CED / CSA2</td><td>因果编码器—解码器 / 第二代压缩稀疏注意力（跨层复用 KV、indexer K 与 top-k）。</td></tr>
+<tr><td>OPD</td><td>on-policy distillation：学生在自己生成的序列上对齐教师分布。</td></tr>
+<tr><td>DSpark / Engram</td><td>V4.1 的并行草稿模块 / 哈希 n-gram 条件记忆。</td></tr>
+</tbody>
+</table>
+</section>
+
+<div class="foot">本文基于一个截面选股研究项目的内部实验记录（已脱敏），以及 DeepSeek-V4 与 DeepSeek-V4.1-Flash 两份公开技术报告撰写。所有迁移建议均为待验证的研究假设。</div>
+</main>
+</div>
+</body>
+</html>

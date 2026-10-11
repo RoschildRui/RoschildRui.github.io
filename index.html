@@ -18,7 +18,12 @@ layout: default
     {% for post in site.posts %}
     <li>
       <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%Y-%m-%d" }}</time>
+      {% if post.en_url %}
+      <a class="zh" href="{{ post.url | relative_url }}">{{ post.title }}</a>
+      <a class="en" href="{{ post.en_url | relative_url }}">{{ post.en.title }}</a>
+      {% else %}
       <a href="{{ post.url | relative_url }}">{% include t.html zh=post.title en=post.en.title %}</a>
+      {% endif %}
     </li>
     {% endfor %}
   </ul>

@@ -72,7 +72,9 @@ title: English Title
 English content...
 ```
 
-没有英文版的内容在英文模式下会继续显示中文。（完整 HTML 页面原样发布，不参与切换。）
+没有英文版的内容在英文模式下会继续显示中文。
+
+完整 HTML 页面（`layout: none`）也可以有英文版，同样命名为 `xxx_en.html`，front matter 和中文版一样带上 `layout: none` 与 `render_with_liquid: false`。英文版会发布在中文地址后面加 `en/`，例如 `/2026/10/11/combo2llmmodel/en/`。构建时会自动在两个版本右下角加上"返回首页"和语言切换按钮，并按访客选的语言自动跳到对应版本，HTML 文件本身不用改。
 
 ## 记录想法
 
@@ -84,6 +86,19 @@ date: 2026-10-12 23:00:00 +0800
 en: English version, optional. Markdown works here too.
 ---
 想到什么写什么，支持 Markdown。
+```
+
+英文有多段时，`en:` 后面写 `|`，下面每行缩进两个空格（空行可以不缩进）：
+
+```markdown
+---
+date: 2026-10-12 23:00:00 +0800
+en: |
+  First paragraph.
+
+  Second paragraph, with a [link](/2026/10/11/combo2llmmodel/en/).
+---
+中文正文……
 ```
 
 首页显示最新的 5 条，其余在 `/thoughts/` 页面。
