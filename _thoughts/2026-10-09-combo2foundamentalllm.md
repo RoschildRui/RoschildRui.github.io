@@ -31,9 +31,13 @@ en: |
 ---
 昨天看了一篇文章 dsv4 csa注意力机制问题分析<https://arxiv.org/pdf/2609.36322>
 重新回顾了一下ds的这些基模 感觉ds很多的基模架构上的创新 不管是mla csa mhc 基本都是基于量化combo策略模型来衍生的
+
 dsv4.1 flash 技术报告<https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/blob/main/DeepSeek_V41_Tech_Report.pdf>
+
 dsv4 技术报告 <https://arxiv.org/pdf/2606.19348>
+
 我让opus-5.5 max基于下面prompt和combo的实验数据撰写了一篇html [链接](/2026/10/11/combo2llmmodel/)供参考 
+
 ```markdown
 我觉得现在很多combo研究的trick和insight在llm基础模型上的研发上都有所涉及 比如dsv4.1 flash 技术报告https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/blob/main/DeepSeek_V41_Tech_Report.pdf
 dsv4 技术报告 https://arxiv.org/pdf/2606.19348两个技术报告中创新的新架构 
