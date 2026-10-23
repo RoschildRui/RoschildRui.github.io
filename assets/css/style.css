@@ -186,6 +186,47 @@ section h2 {
 .thought-list time { color: var(--muted); font-size: 13px; }
 .thought-list .empty { color: var(--muted); border: none; }
 
+.timeline-month {
+  font-size: 15px;
+  color: var(--muted);
+  margin: 32px 0 12px;
+  font-variant-numeric: tabular-nums;
+}
+.timeline-month:first-child { margin-top: 0; }
+.timeline-items {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 24px;
+  border-left: 2px solid var(--border);
+  margin-left: 5px;
+}
+.timeline-items li {
+  position: relative;
+  padding: 0 0 24px;
+}
+.timeline-items li:last-child { padding-bottom: 4px; }
+.timeline-items li::before {
+  content: "";
+  position: absolute;
+  left: -31px;
+  top: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 2px solid var(--accent);
+}
+.timeline-items time {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 4px;
+}
+.timeline-items .prose > :first-child { margin-top: 0; }
+.timeline-items .prose > :last-child { margin-bottom: 0; }
+#thoughts > .empty { color: var(--muted); }
+
 .more { margin-top: 16px; }
 
 /* Articles */
