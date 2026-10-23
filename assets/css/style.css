@@ -183,6 +183,7 @@ section h2 {
 .thought-list li:last-child { border-bottom: none; }
 .thought-list .prose > :first-child { margin-top: 0; }
 .thought-list .prose > :last-child { margin-bottom: 4px; }
+.thought-list .prose img { display: block; max-height: 280px; width: auto; margin: 8px 0; }
 .thought-list time { color: var(--muted); font-size: 13px; }
 .thought-list .empty { color: var(--muted); border: none; }
 
