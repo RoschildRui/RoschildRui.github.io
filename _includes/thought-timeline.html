@@ -1,0 +1,79 @@
+{% assign groups = include.thoughts | group_by_exp: "t", "t.date | date: '%Y-%m'" %}
+{% assign oldest = include.thoughts | last %}
+{% assign max_count = 1 %}
+{% for g in groups %}{% if g.size > max_count %}{% assign max_count = g.size %}{% endif %}{% endfor %}
+
+{% if include.thoughts.size > 0 %}
+<div class="tl-summary">
+  <dl class="tl-stats">
+    <div>
+      <dt><span class="zh">想法</span><span class="en">Thoughts</span></dt>
+      <dd>{{ include.thoughts.size }}</dd>
+    </div>
+    <div>
+      <dt><span class="zh">活跃月份</span><span class="en">Active months</span></dt>
+      <dd>{{ groups.size }}</dd>
+    </div>
+    <div>
+      <dt><span class="zh">始于</span><span class="en">Since</span></dt>
+      <dd>
+        <span class="zh">{{ oldest.date | date: "%Y.%-m.%-d" }}</span>
+        <span class="en">{{ oldest.date | date: "%b %-d, %Y" }}</span>
+      </dd>
+    </div>
+  </dl>
+  <nav class="tl-activity" aria-label="按月份分布 / By month">
+    {% assign oldest_first = groups | reverse %}
+    {% for g in oldest_first %}
+    {% assign sample = g.items | first %}
+    {% assign pct = g.size | times: 100 | divided_by: max_count %}
+    <a href="#m-{{ g.name }}" style="--h: {{ pct }}%" title="{{ g.name }} · {{ g.size }}">
+      <span class="bar"></span>
+      <span class="label">
+        <span class="zh">{{ sample.date | date: "%-m月" }}</span>
+        <span class="en">{{ sample.date | date: "%b" }}</span>
+      </span>
+    </a>
+    {% endfor %}
+  </nav>
+</div>
+{% endif %}
+
+<ol class="timeline">
+  {% for g in groups %}
+  {% assign sample = g.items | first %}
+  <li class="tl-month" id="m-{{ g.name }}">
+    <h3 class="tl-month-label">
+      <span class="zh">{{ sample.date | date: "%Y 年 %-m 月" }}</span>
+      <span class="en">{{ sample.date | date: "%B %Y" }}</span>
+      <span class="tl-count">{{ g.size }}</span>
+    </h3>
+    <ol class="tl-items">
+      {% for thought in g.items %}
+      {% assign tid = thought.date | date: "t-%Y%m%d-%H%M" %}
+      <li class="tl-item{% if forloop.first and forloop.parentloop.first %} is-latest{% endif %}" id="{{ tid }}">
+        <a class="tl-date" href="#{{ tid }}">
+          <time datetime="{{ thought.date | date_to_xmlschema }}">
+            <span class="tl-day">{{ thought.date | date: "%-d" }}</span>
+            <span class="tl-meta">
+              <span class="zh">{{ thought.date | date: "%-m月 · %H:%M" }}</span>
+              <span class="en">{{ thought.date | date: "%b · %H:%M" }}</span>
+            </span>
+          </time>
+        </a>
+        <div class="tl-card">
+          {% if thought.en %}
+          <div class="prose zh">{{ thought.content }}</div>
+          <div class="prose en">{{ thought.en | markdownify }}</div>
+          {% else %}
+          <div class="prose">{{ thought.content }}</div>
+          {% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ol>
+  </li>
+  {% else %}
+  <li class="tl-empty"><span class="zh">还没有想法。</span><span class="en">Nothing here yet.</span></li>
+  {% endfor %}
+</ol>

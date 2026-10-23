@@ -6,30 +6,5 @@ permalink: /thoughts/
 <section id="thoughts">
   <h2><span class="zh">全部想法</span><span class="en">All thoughts</span></h2>
   {% assign thoughts = site.thoughts | sort: "date" | reverse %}
-  {% assign months = thoughts | group_by_exp: "t", "t.date | date: '%Y-%m'" %}
-  {% if months.size > 0 %}
-  <div class="timeline">
-    {% for month in months %}
-    {% assign first = month.items | first %}
-    <h3 class="timeline-month">
-      <span class="zh">{{ first.date | date: "%Y 年 %-m 月" }}</span><span class="en">{{ first.date | date: "%B %Y" }}</span>
-    </h3>
-    <ol class="timeline-items">
-      {% for thought in month.items %}
-      <li>
-        <time datetime="{{ thought.date | date_to_xmlschema }}">{{ thought.date | date: "%m-%d %H:%M" }}</time>
-        {% if thought.en %}
-        <div class="prose zh">{{ thought.content }}</div>
-        <div class="prose en">{{ thought.en | markdownify }}</div>
-        {% else %}
-        <div class="prose">{{ thought.content }}</div>
-        {% endif %}
-      </li>
-      {% endfor %}
-    </ol>
-    {% endfor %}
-  </div>
-  {% else %}
-  <p class="empty"><span class="zh">还没有想法。</span><span class="en">Nothing here yet.</span></p>
-  {% endif %}
+  {% include thought-timeline.html thoughts=thoughts %}
 </section>
