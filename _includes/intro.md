@@ -4,7 +4,7 @@
 
 2027-2030（预期） 博士 香港大学 指导老师：[刘琦](https://leuchine.github.io/)
 
-研究兴趣方向：agentic trending
+研究兴趣方向：agentic trading
 
 熟悉：
 

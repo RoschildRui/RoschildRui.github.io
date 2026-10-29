@@ -4,7 +4,7 @@ Qirui Liu
 
 2027–2030 (expected) Ph.D., The University of Hong Kong, advised by [Qi Liu](https://leuchine.github.io/)
 
-Research interest: agentic trending
+Research interest: agentic trading
 
 Familiar with:
 
